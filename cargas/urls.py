@@ -1,5 +1,11 @@
 from django.urls import path
 
-urlpatterns = [
+from cargas.views import vista_subida
 
+urlpatterns = [
+    path(
+        'subir/',
+        vista_subida,
+        name='subir_excel_html'
+    )
 ]
