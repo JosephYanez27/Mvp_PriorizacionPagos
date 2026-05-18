@@ -159,9 +159,17 @@ USE_TZ = True
 # STATIC
 # ======================================================
 
+from pathlib import Path
+
+# Asegúrate de que BASE_DIR esté definido arriba en tu archivo
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 STATIC_URL = 'static/'
 
-
+# Añade esta configuración para indicarle a Django la ruta de la carpeta static raíz
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 # ======================================================
 # MEDIA
 # ======================================================

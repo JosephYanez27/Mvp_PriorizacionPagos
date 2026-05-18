@@ -1,232 +1,481 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Priorización de Pagos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    
     <style>
-        /* Pequeño ajuste para suavizar transiciones */
-        .transition-all { transition: all 0.3s ease; }
+        /* Ajustes adicionales para integrar los nuevos componentes limpios */
+        .filter-select {
+            padding: 8px 32px 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            font-family: var(--font-sans);
+            background: #ffffff;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            min-width: 190px;
+        }
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .kpi-card-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--text-primary);
+        }
+        .kpi-card.danger .kpi-card-icon { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .kpi-card.warning .kpi-card-icon { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .kpi-card.success .kpi-card-icon { background: rgba(16, 185, 129, 0.1); color: var(--accent); }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .star-container {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+        }
+        .star-svg {
+            width: 16px;
+            height: 16px;
+        }
+        .nav-btn.primary {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-800">
+<body>
 
-    <div class="max-w-7xl mx-auto">
+    <div class="shell">
         
-        <header class="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="badge">SISTEMA VIVO</div>
+                <h1>Tesorería Inteligente</h1>
+                <p>Análisis de Riesgo Operativo</p>
+            </div>
+            
+            <nav class="nav-section">
+                <p class="nav-label">Módulos</p>
+                <div class="nav-item active">
+                    <i data-lucide="layers" style="width: 18px; height: 18px;"></i>
+                    <span>Priorización Pagos</span>
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="history" style="width: 18px; height: 18px; opacity: 0.7;"></i>
+                    <span>Historial de Giros</span>
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="settings" style="width: 18px; height: 18px; opacity: 0.7;"></i>
+                    <span>Configuración</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-row">
+                    <span>Base de Datos:</span>
+                    <span class="sidebar-footer-val green">Conectada</span>
+                </div>
+                <div class="sidebar-footer-row">
+                    <span>Motor Scoring:</span>
+                    <span class="sidebar-footer-val">v2.1 (Max-Days)</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            
+            <header class="navbar">
+                <div class="navbar-left">
+                    <span class="breadcrumb-item">Mvp</span>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="breadcrumb-item active">Dashboard de Priorización</span>
+                </div>
+                <div class="navbar-right">
+                    <div class="status-chip">
+                        <div class="status-dot"></div>
+                        <span class="status-label">Flujo Sincronizado</span>
+                    </div>
+                    <span class="date-display" id="live-date">Mayo, 2026</span>
+                </div>
+            </header>
+
+            <div class="content">
+                
+                <section class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
+                        <p class="kpi-label">Total en Fila (Filtrado)</p>
+                        <p class="kpi-value accent" id="kpi-total">$0.00</p>
+                        <p class="kpi-sub" id="kpi-count-prov">0 proveedores cargados</p>
+                    </div>
+                    <div class="kpi-card danger">
+                        <div class="kpi-card-icon"><i data-lucide="shield-alert"></i></div>
+                        <p class="kpi-label">Cuentas en Riesgo Crítico</p>
+                        <p class="kpi-value danger" id="kpi-criticos">0</p>
+                        <p class="kpi-sub">Scoring superior al 75%</p>
+                    </div>
+                    <div class="kpi-card warning">
+                        <div class="kpi-card-icon"><i data-lucide="clock"></i></div>
+                        <p class="kpi-label">Máximo Retraso Detectado</p>
+                        <p class="kpi-value warning" id="kpi-max-dias">0 días</p>
+                        <p class="kpi-sub">Impactando penalizaciones</p>
+                    </div>
+                    <div class="kpi-card success">
+                        <div class="kpi-card-icon"><i data-lucide="star"></i></div>
+                        <p class="kpi-label">Promedio de Estrellas</p>
+                        <p class="kpi-value success" id="kpi-promedio-estrellas">0.0</p>
+                        <p class="kpi-sub">Importancia de la cartera</p>
+                    </div>
+                </section>
+
+                <section class="section-header">
+                    <div>
+                        <h2 class="section-title">Análisis de Dispersión Basado en Riesgo</h2>
+                        <p class="section-subtitle">Filtra la cartera vencida en tiempo real mediante herramientas de precisión.</p>
+                    </div>
+                </section>
+
+                <div class="filter-bar">
+                    <div style="position: relative; width: 280px;">
+                        <input type="text" id="searchInput" placeholder="Buscar proveedor..." 
+                               style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; font-family: var(--font-sans); font-size: 14px;">
+                        <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); opacity: 0.7;"></i>
+                    </div>
+
+                    <select id="starFilter" class="filter-select">
+                        <option value="all">★ Todos los Niveles</option>
+                        <option value="5">★★★★★ 5 Estrellas</option>
+                        <option value="4">★★★★ 4 Estrellas</option>
+                        <option value="3">★★★ 3 Estrellas</option>
+                        <option value="2">★★ 2 Estrellas</option>
+                        <option value="1">★ 1 Estrella</option>
+                    </select>
+
+                    <button id="sortBtn" class="nav-btn primary" style="margin-left: auto; padding: 8px 14px; font-size: 12px;">
+                        <span>Scoring: Mayor a Menor</span>
+                        <i data-lucide="arrow-down-narrow-wide" id="sort-icon" style="width: 14px; height: 14px;"></i>
+                    </button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Proveedor</th>
+                                <th style="text-align: right;">Cantidad a Dispersar</th>
+                                <th style="text-align: center;">Nivel (Estrellas)</th>
+                                <th style="text-align: center;">Días Vencidos</th>
+                                <th>Scoring de Riesgo</th>
+                                <th style="text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="emptyState" style="display: none; padding: 48px; text-align: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-top: 16px;">
+                    <p style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Ningún registro coincide con los criterios de búsqueda o filtrado.</p>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="blade-overlay"></div>
+    <div id="blade">
+        <div class="blade-header">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Priorización de Pagos</h1>
-                <p class="text-slate-500 mt-1">Análisis inteligente de riesgo y urgencia (Scoring).</p>
+                <h3 class="blade-title" id="blade-prov-name">Detalle del Proveedor</h3>
+                <p class="blade-subtitle">Evaluación algorítmica para toma de decisiones inmediatas.</p>
             </div>
-            
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
-                <div class="p-3 bg-blue-100 text-blue-600 rounded-lg">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <button class="blade-close" id="closeBladeBtn">×</button>
+        </div>
+        
+        <div class="blade-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <p class="info-item-label">Monto Solicitado</p>
+                    <p class="info-item-value" id="blade-monto">$0.00</p>
                 </div>
-                <div>
-                    <p class="text-xs text-slate-500 font-semibold uppercase">Total a Pagar Filtrado</p>
-                    <p class="text-xl font-bold text-slate-800" id="total-monto">$0.00</p>
-                </div>
-            </div>
-        </header>
-
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4">
-            
-            <div class="flex-1">
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Buscar Proveedor</label>
-                <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Ej. LAMINADOS..." 
-                        class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                    <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <div class="info-item">
+                    <p class="info-item-label">Índice de Riesgo</p>
+                    <p class="info-item-value" id="blade-score">0%</p>
                 </div>
             </div>
 
-            <div class="w-full md:w-48">
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Prioridad</label>
-                <select id="starFilter" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
-                    <option value="all">Todas las estrellas</option>
-                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-                    <option value="4">⭐⭐⭐⭐ (4)</option>
-                    <option value="3">⭐⭐⭐ (3)</option>
-                    <option value="2">⭐⭐ (2)</option>
-                    <option value="1">⭐ (1)</option>
-                </select>
+            <div class="alert-box critical" id="blade-alert-zone">
+                <p class="alert-label" id="blade-alert-title">Atención Estratégica Requerida</p>
+                <p class="alert-text" id="blade-alert-desc">Este proveedor presenta un retraso considerable que compromete la cadena de suministros.</p>
             </div>
 
-            <div class="w-full md:w-auto flex items-end">
-                <button id="sortBtn" class="w-full md:w-auto px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                    <span>Scoring: Mayor a Menor</span>
-                    <svg id="sortIcon" class="w-4 h-4 transform rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
-                </button>
+            <div>
+                <p class="justificacion-label">Factores Incidentes</p>
+                <div class="causa-row">
+                    <span class="causa-label">Importancia Comercial (Estrellas)</span>
+                    <span class="causa-badge causa-adm" id="blade-factor-prov">0 / 5</span>
+                </div>
+                <div class="causa-row">
+                    <span class="causa-label">Vencimiento de Facturas</span>
+                    <span class="causa-badge causa-prov" id="blade-factor-tiempo">0 días</span>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                            <th class="p-4 w-1/3">Proveedor</th>
-                            <th class="p-4 text-right">Cantidad a Pagar</th>
-                            <th class="p-4 text-center">Prioridad</th>
-                            <th class="p-4 text-center">Días Vencidos</th>
-                            <th class="p-4 w-1/4">Scoring (Riesgo)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100">
-                        </tbody>
-                </table>
-            </div>
-            
-            <div id="emptyState" class="hidden p-12 text-center">
-                <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h3 class="mt-2 text-sm font-medium text-slate-900">No hay resultados</h3>
-                <p class="mt-1 text-sm text-slate-500">Intenta ajustando los filtros o el buscador.</p>
+        <div class="blade-footer">
+            <p class="justificacion-label">Justificación Operativa (Opcional)</p>
+            <textarea class="justificacion-input" placeholder="Escribe notas de tesorería..."></textarea>
+            <div class="blade-actions">
+                <button class="action-btn rechazar" onclick="ejecutarAccionBlade('Rechazado')">Postponer</button>
+                <button class="action-btn ajustar" onclick="ejecutarAccionBlade('Ajustado')">Reestructurar</button>
+                <button class="action-btn aprobar" onclick="ejecutarAccionBlade('Aprobado')">Autorizar Pago</button>
             </div>
         </div>
     </div>
 
+    <div id="toast">Operación procesada con éxito.</div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <script>
-        // Aquí simulamos la llegada de tu JSON. 
-        // En producción, harías un fetch('/tu-url-django/') o lo inyectarías desde el contexto.
-        const rawData = [
-            {"proveedor": "ADN LAMINADOS INDUSTRIALES", "cantidad_a_pagar": 244000, "prioridad_estrellas": 3, "dias_vencidos": 240, "scoring": 76},
-            {"proveedor": "ALPHA INDUSTRIAL COATINGS LLC", "cantidad_a_pagar": 12972, "prioridad_estrellas": 3, "dias_vencidos": 240, "scoring": 76},
-            {"proveedor": "AQ CORPORATION.", "cantidad_a_pagar": 930696, "prioridad_estrellas": 3, "dias_vencidos": 120, "scoring": 76},
-            {"proveedor": "ASESORIA Y SERVICIOS DE INGENIERIA PARA LA INDUSTRIA SA DE CV", "cantidad_a_pagar": 170695240, "prioridad_estrellas": 3, "dias_vencidos": 7200, "scoring": 76},
-            {"proveedor": "BANCO SA", "cantidad_a_pagar": 6901992, "prioridad_estrellas": 3, "dias_vencidos": 480, "scoring": 76},
-            {"proveedor": "BH SA DE CV", "cantidad_a_pagar": 379724838, "prioridad_estrellas": 3, "dias_vencidos": 6720, "scoring": 76},
-            {"proveedor": "CAPITAL INMOBILIARIO", "cantidad_a_pagar": 5453590, "prioridad_estrellas": 5, "dias_vencidos": 60, "scoring": 95}, // Modificado para el demo
-            {"proveedor": "A MEXICO S DE RL DE CV", "cantidad_a_pagar": 127402324, "prioridad_estrellas": 1, "dias_vencidos": 0, "scoring": 36}, // Modificado para el demo
-            {"proveedor": "GAS IDEAL", "cantidad_a_pagar": 4585230, "prioridad_estrellas": 2, "dias_vencidos": 0, "scoring": 36} // Modificado para el demo
-        ];
-
-        // Estado de la UI
-        let currentData = [...rawData];
+        let rawData = [];
+        let currentData = [];
         let isSortDesc = true;
+        let selectedStarFilter = 'all';
 
-        // Elementos del DOM
         const tableBody = document.getElementById('tableBody');
         const emptyState = document.getElementById('emptyState');
         const searchInput = document.getElementById('searchInput');
         const starFilter = document.getElementById('starFilter');
         const sortBtn = document.getElementById('sortBtn');
-        const sortIcon = document.getElementById('sortIcon');
-        const totalMontoEl = document.getElementById('total-monto');
+        const sortIcon = document.getElementById('sort-icon');
+        
+        const bladeOverlay = document.getElementById('blade-overlay');
+        const blade = document.getElementById('blade');
+        const closeBladeBtn = document.getElementById('closeBladeBtn');
 
-        // Formateadores
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
         };
 
-        const renderStars = (count) => {
-            let starsHtml = '';
-            for(let i = 1; i <= 5; i++) {
-                if(i <= count) {
-                    starsHtml += `<span class="text-yellow-400 text-lg">★</span>`;
+        // CONSTRUCTOR DINÁMICO DE ESTRELLAS VECTORIALES (SVG) PARA LA TABLA
+        const buildStarsHtml = (starsCount) => {
+            let html = '<div class="star-container">';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= starsCount) {
+                    // Estrella Activa (Dorado corporativo premium)
+                    html += `<svg class="star-svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
                 } else {
-                    starsHtml += `<span class="text-slate-200 text-lg">★</span>`;
+                    // Estrella Inactiva (Gris sutil calado)
+                    html += `<svg class="star-svg" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
                 }
             }
-            return starsHtml;
+            html += '</div>';
+            return html;
         };
 
-        const getScoringColor = (score) => {
-            if(score >= 75) return 'bg-red-500';
-            if(score >= 50) return 'bg-orange-400';
-            return 'bg-emerald-500';
+        const buildScoreCell = (score) => {
+            let metricClass = 'low';
+            if (score >= 75) metricClass = 'low';
+            else if (score >= 50) metricClass = 'mid';
+            else metricClass = 'high';
+            
+            return `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="score-cell ${metricClass}">${score}%</span>
+                    <div style="flex: 1; background: var(--border); height: 6px; border-radius: 3px; overflow: hidden; min-width: 80px;">
+                        <div style="width: ${score}%; height: 100%; background: ${score >= 75 ? 'var(--danger)' : score >= 50 ? 'var(--warning)' : 'var(--accent)'}; border-radius: 3px;"></div>
+                    </div>
+                </div>
+            `;
         };
 
-        // Lógica de Renderizado
         const renderTable = () => {
             tableBody.innerHTML = '';
-            let totalAcumulado = 0;
-
+            
             if (currentData.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                
-                currentData.forEach(item => {
-                    totalAcumulado += item.cantidad_a_pagar;
-                    const colorClass = getScoringColor(item.scoring);
-                    
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-slate-50 transition-colors group';
-                    tr.innerHTML = `
-                        <td class="p-4 font-medium text-slate-800 whitespace-nowrap">
-                            ${item.proveedor}
-                        </td>
-                        <td class="p-4 text-right font-mono text-slate-700">
-                            ${formatCurrency(item.cantidad_a_pagar)}
-                        </td>
-                        <td class="p-4 text-center tracking-widest">
-                            ${renderStars(item.prioridad_estrellas)}
-                        </td>
-                        <td class="p-4 text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.dias_vencidos > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                                ${item.dias_vencidos} días
-                            </span>
-                        </td>
-                        <td class="p-4">
-                            <div class="flex items-center gap-3">
-                                <span class="text-sm font-bold w-8 text-right ${item.scoring >= 75 ? 'text-red-600' : 'text-slate-700'}">${item.scoring}%</span>
-                                <div class="w-full bg-slate-200 rounded-full h-2">
-                                    <div class="${colorClass} h-2 rounded-full transition-all duration-500" style="width: ${item.scoring}%"></div>
-                                </div>
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
+                emptyState.style.display = 'block';
+                actualizarKPIs(0, 0, 0, 0);
+                return;
             }
+            emptyState.style.display = 'none';
 
-            // Actualizar el total general
-            totalMontoEl.textContent = formatCurrency(totalAcumulado);
+            let acumuladoMonto = 0;
+            let cuentasCriticas = 0;
+            let maxRetraso = 0;
+            let sumaEstrellas = 0;
+
+            currentData.forEach((item, index) => {
+                acumuladoMonto += item.cantidad_a_pagar;
+                if (item.scoring >= 75) cuentasCriticas++;
+                if (item.dias_vencidos > maxRetraso) maxRetraso = item.dias_vencidos;
+                sumaEstrellas += item.prioridad_estrellas;
+
+                let urgencyClass = 'urgency-baja';
+                if (item.dias_vencidos >= 60) urgencyClass = 'urgency-paro';
+                else if (item.dias_vencidos >= 30) urgencyClass = 'urgency-alta';
+                else if (item.dias_vencidos > 0) urgencyClass = 'urgency-media';
+
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: var(--text-primary);">${item.proveedor}</td>
+                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 500; color: var(--text-secondary);">${formatCurrency(item.cantidad_a_pagar)}</td>
+                    <td style="text-align: center;">${buildStarsHtml(item.prioridad_estrellas)}</td>
+                    <td style="text-align: center;"><span class="${urgencyClass}">${item.dias_vencidos} días</span></td>
+                    <td>${buildScoreCell(item.scoring)}</td>
+                    <td style="text-align: center;">
+                        <button class="review-btn" onclick="abrirDetalleBlade(${index}); event.stopPropagation();">Auditar</button>
+                    </td>
+                `;
+                tr.addEventListener('click', () => abrirDetalleBlade(index));
+                tableBody.appendChild(tr);
+            });
+
+            const promedioEstrellas = (sumaEstrellas / currentData.length).toFixed(1);
+            actualizarKPIs(acumuladoMonto, cuentasCriticas, maxRetraso, promedioEstrellas);
         };
 
-        // Lógica de Filtrado y Ordenamiento
+        const actualizarKPIs = (total, criticos, maxDias, promEstrellas) => {
+            document.getElementById('kpi-total').textContent = formatCurrency(total);
+            document.getElementById('kpi-count-prov').textContent = `${currentData.length} proveedores en cola`;
+            document.getElementById('kpi-criticos').textContent = criticos;
+            document.getElementById('kpi-max-dias').textContent = `${maxDias} días`;
+            document.getElementById('kpi-promedio-estrellas').textContent = isNaN(promEstrellas) ? '0.0' : promEstrellas;
+        };
+
         const applyFilters = () => {
             const searchTerm = searchInput.value.toLowerCase();
-            const starValue = starFilter.value;
 
-            // Filtrar
             currentData = rawData.filter(item => {
                 const matchesSearch = item.proveedor.toLowerCase().includes(searchTerm);
-                const matchesStars = starValue === 'all' || item.prioridad_estrellas.toString() === starValue;
+                const matchesStars = selectedStarFilter === 'all' || item.prioridad_estrellas.toString() === selectedStarFilter;
                 return matchesSearch && matchesStars;
             });
 
-            // Ordenar
             currentData.sort((a, b) => {
-                if (isSortDesc) {
-                    return b.scoring - a.scoring;
-                } else {
-                    return a.scoring - b.scoring;
-                }
+                return isSortDesc ? (b.scoring - a.scoring) : (a.scoring - b.scoring);
             });
 
             renderTable();
         };
 
-        // Event Listeners
-        searchInput.addEventListener('input', applyFilters);
-        starFilter.addEventListener('change', applyFilters);
-        
-        sortBtn.addEventListener('click', () => {
-            isSortDesc = !isSortDesc;
+        const abrirDetalleBlade = (indexInCurrent) => {
+            const item = currentData[indexInCurrent];
+            if (!item) return;
+
+            document.getElementById('blade-prov-name').textContent = item.proveedor;
+            document.getElementById('blade-monto').textContent = formatCurrency(item.cantidad_a_pagar);
+            document.getElementById('blade-score').textContent = `${item.scoring}%`;
+            document.getElementById('blade-factor-prov').textContent = `${item.prioridad_estrellas} / 5 Estrellas`;
+            document.getElementById('blade-factor-tiempo').textContent = `${item.dias_vencidos} días de retraso`;
+
+            const alertZone = document.getElementById('blade-alert-zone');
+            const alertTitle = document.getElementById('blade-alert-title');
+            const alertDesc = document.getElementById('blade-alert-desc');
+
+            alertZone.className = 'alert-box'; 
+            if (item.scoring >= 75) {
+                alertZone.classList.add('critical');
+                alertTitle.textContent = 'Riesgo Crítico Operativo';
+                alertDesc.textContent = 'Prioridad de pago de emergencia. Supera el umbral de tolerancia por acumulación de retrasos.';
+            } else if (item.scoring >= 50) {
+                alertZone.classList.add('warning');
+                alertTitle.textContent = 'Atención Intermedia';
+                alertDesc.textContent = 'Evolución moderada de deuda. Se recomienda revisar plazos comerciales.';
+            } else {
+                alertZone.classList.add('info');
+                alertTitle.textContent = 'Estatus Controlado';
+                alertDesc.textContent = 'Parámetros óptimos de salud financiera. La cuenta no registra incidencias.';
+            }
+
+            bladeOverlay.classList.add('open');
+            blade.classList.add('open');
+        };
+
+        const cerrarBlade = () => {
+            bladeOverlay.classList.remove('open');
+            blade.classList.remove('open');
+        };
+
+        const ejecutarAccionBlade = (accion) => {
+            const provName = document.getElementById('blade-prov-name').textContent;
+            cerrarBlade();
             
-            // Actualizar UI del botón
-            sortBtn.querySelector('span').textContent = isSortDesc ? 'Scoring: Mayor a Menor' : 'Scoring: Menor a Mayor';
-            sortIcon.style.transform = isSortDesc ? 'rotate(180deg)' : 'rotate(0deg)';
+            const toast = document.getElementById('toast');
+            toast.className = 'ok';
+            toast.textContent = `Proveedor "${provName}" marcado como: ${accion} correctamente.`;
+            toast.classList.add('show');
             
+            setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        };
+
+        const cargarDatosVivos = async () => {
+            try {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Estableciendo conexión y mapeando variables de riesgo...</td></tr>`;
+                
+                const response = await fetch('/api/pagos/');
+                if (!response.ok) throw new Error('Respuesta de red inválida desde el servidor.');
+                
+                rawData = await response.json();
+                applyFilters();
+            } catch (error) {
+                console.error("Error operativo:", error);
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ Fallo de Sincronización: No se pudieron extraer las facturas.</td></tr>`;
+            }
+        };
+
+        // CAPTURA EL CAMBIO DE LA NUEVA LISTA DESPLEGABLE
+        starFilter.addEventListener('change', (e) => {
+            selectedStarFilter = e.target.value;
             applyFilters();
         });
 
-        // Inicializar
-        applyFilters();
+        searchInput.addEventListener('input', applyFilters);
 
+        sortBtn.addEventListener('click', () => {
+            isSortDesc = !isSortDesc;
+            sortBtn.querySelector('span').textContent = isSortDesc ? 'Scoring: Mayor a Menor' : 'Scoring: Menor a Mayor';
+            sortIcon.setAttribute('data-lucide', isSortDesc ? 'arrow-down-narrow-wide' : 'arrow-up-narrow-wide');
+            lucide.createIcons(); // Re-renderiza exclusivamente el icono de ordenamiento cambiado
+            applyFilters();
+        });
+
+        closeBladeBtn.addEventListener('click', cerrarBlade);
+        bladeOverlay.addEventListener('click', cerrarBlade);
+
+        const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('live-date').textContent = new Date().toLocaleDateString('es-MX', opcionesFecha);
+
+        // Inicialización de datos e íconos generales
+        lucide.createIcons();
+        cargarDatosVivos();
     </script>
 </body>
 </html>
