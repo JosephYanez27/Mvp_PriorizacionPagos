@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Priorización de Pagos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Pequeño ajuste para suavizar transiciones */
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-800">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Priorización de Pagos</h1>
+                <p class="text-slate-500 mt-1">Análisis inteligente de riesgo y urgencia (Scoring).</p>
+            </div>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div class="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-semibold uppercase">Total a Pagar Filtrado</p>
+                    <p class="text-xl font-bold text-slate-800" id="total-monto">$0.00</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4">
+            
+            <div class="flex-1">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Buscar Proveedor</label>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Ej. LAMINADOS..." 
+                        class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+
+            <div class="w-full md:w-48">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Prioridad</label>
+                <select id="starFilter" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+                    <option value="all">Todas las estrellas</option>
+                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                    <option value="4">⭐⭐⭐⭐ (4)</option>
+                    <option value="3">⭐⭐⭐ (3)</option>
+                    <option value="2">⭐⭐ (2)</option>
+                    <option value="1">⭐ (1)</option>
+                </select>
+            </div>
+
+            <div class="w-full md:w-auto flex items-end">
+                <button id="sortBtn" class="w-full md:w-auto px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                    <span>Scoring: Mayor a Menor</span>
+                    <svg id="sortIcon" class="w-4 h-4 transform rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                            <th class="p-4 w-1/3">Proveedor</th>
+                            <th class="p-4 text-right">Cantidad a Pagar</th>
+                            <th class="p-4 text-center">Prioridad</th>
+                            <th class="p-4 text-center">Días Vencidos</th>
+                            <th class="p-4 w-1/4">Scoring (Riesgo)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div id="emptyState" class="hidden p-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h3 class="mt-2 text-sm font-medium text-slate-900">No hay resultados</h3>
+                <p class="mt-1 text-sm text-slate-500">Intenta ajustando los filtros o el buscador.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Aquí simulamos la llegada de tu JSON. 
+        // En producción, harías un fetch('/tu-url-django/') o lo inyectarías desde el contexto.
+        const rawData = [
+            {"proveedor": "ADN LAMINADOS INDUSTRIALES", "cantidad_a_pagar": 244000, "prioridad_estrellas": 3, "dias_vencidos": 240, "scoring": 76},
+            {"proveedor": "ALPHA INDUSTRIAL COATINGS LLC", "cantidad_a_pagar": 12972, "prioridad_estrellas": 3, "dias_vencidos": 240, "scoring": 76},
+            {"proveedor": "AQ CORPORATION.", "cantidad_a_pagar": 930696, "prioridad_estrellas": 3, "dias_vencidos": 120, "scoring": 76},
+            {"proveedor": "ASESORIA Y SERVICIOS DE INGENIERIA PARA LA INDUSTRIA SA DE CV", "cantidad_a_pagar": 170695240, "prioridad_estrellas": 3, "dias_vencidos": 7200, "scoring": 76},
+            {"proveedor": "BANCO SA", "cantidad_a_pagar": 6901992, "prioridad_estrellas": 3, "dias_vencidos": 480, "scoring": 76},
+            {"proveedor": "BH SA DE CV", "cantidad_a_pagar": 379724838, "prioridad_estrellas": 3, "dias_vencidos": 6720, "scoring": 76},
+            {"proveedor": "CAPITAL INMOBILIARIO", "cantidad_a_pagar": 5453590, "prioridad_estrellas": 5, "dias_vencidos": 60, "scoring": 95}, // Modificado para el demo
+            {"proveedor": "A MEXICO S DE RL DE CV", "cantidad_a_pagar": 127402324, "prioridad_estrellas": 1, "dias_vencidos": 0, "scoring": 36}, // Modificado para el demo
+            {"proveedor": "GAS IDEAL", "cantidad_a_pagar": 4585230, "prioridad_estrellas": 2, "dias_vencidos": 0, "scoring": 36} // Modificado para el demo
+        ];
+
+        // Estado de la UI
+        let currentData = [...rawData];
+        let isSortDesc = true;
+
+        // Elementos del DOM
+        const tableBody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const starFilter = document.getElementById('starFilter');
+        const sortBtn = document.getElementById('sortBtn');
+        const sortIcon = document.getElementById('sortIcon');
+        const totalMontoEl = document.getElementById('total-monto');
+
+        // Formateadores
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+        };
+
+        const renderStars = (count) => {
+            let starsHtml = '';
+            for(let i = 1; i <= 5; i++) {
+                if(i <= count) {
+                    starsHtml += `<span class="text-yellow-400 text-lg">★</span>`;
+                } else {
+                    starsHtml += `<span class="text-slate-200 text-lg">★</span>`;
+                }
+            }
+            return starsHtml;
+        };
+
+        const getScoringColor = (score) => {
+            if(score >= 75) return 'bg-red-500';
+            if(score >= 50) return 'bg-orange-400';
+            return 'bg-emerald-500';
+        };
+
+        // Lógica de Renderizado
+        const renderTable = () => {
+            tableBody.innerHTML = '';
+            let totalAcumulado = 0;
+
+            if (currentData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                currentData.forEach(item => {
+                    totalAcumulado += item.cantidad_a_pagar;
+                    const colorClass = getScoringColor(item.scoring);
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50 transition-colors group';
+                    tr.innerHTML = `
+                        <td class="p-4 font-medium text-slate-800 whitespace-nowrap">
+                            ${item.proveedor}
+                        </td>
+                        <td class="p-4 text-right font-mono text-slate-700">
+                            ${formatCurrency(item.cantidad_a_pagar)}
+                        </td>
+                        <td class="p-4 text-center tracking-widest">
+                            ${renderStars(item.prioridad_estrellas)}
+                        </td>
+                        <td class="p-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.dias_vencidos > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${item.dias_vencidos} días
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-bold w-8 text-right ${item.scoring >= 75 ? 'text-red-600' : 'text-slate-700'}">${item.scoring}%</span>
+                                <div class="w-full bg-slate-200 rounded-full h-2">
+                                    <div class="${colorClass} h-2 rounded-full transition-all duration-500" style="width: ${item.scoring}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            // Actualizar el total general
+            totalMontoEl.textContent = formatCurrency(totalAcumulado);
+        };
+
+        // Lógica de Filtrado y Ordenamiento
+        const applyFilters = () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const starValue = starFilter.value;
+
+            // Filtrar
+            currentData = rawData.filter(item => {
+                const matchesSearch = item.proveedor.toLowerCase().includes(searchTerm);
+                const matchesStars = starValue === 'all' || item.prioridad_estrellas.toString() === starValue;
+                return matchesSearch && matchesStars;
+            });
+
+            // Ordenar
+            currentData.sort((a, b) => {
+                if (isSortDesc) {
+                    return b.scoring - a.scoring;
+                } else {
+                    return a.scoring - b.scoring;
+                }
+            });
+
+            renderTable();
+        };
+
+        // Event Listeners
+        searchInput.addEventListener('input', applyFilters);
+        starFilter.addEventListener('change', applyFilters);
+        
+        sortBtn.addEventListener('click', () => {
+            isSortDesc = !isSortDesc;
+            
+            // Actualizar UI del botón
+            sortBtn.querySelector('span').textContent = isSortDesc ? 'Scoring: Mayor a Menor' : 'Scoring: Menor a Mayor';
+            sortIcon.style.transform = isSortDesc ? 'rotate(180deg)' : 'rotate(0deg)';
+            
+            applyFilters();
+        });
+
+        // Inicializar
+        applyFilters();
+
+    </script>
+</body>
+</html>

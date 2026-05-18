@@ -10,4 +10,10 @@ urlpatterns = [
         views.index,
         name='dashboard'
     ),
+
+    path(
+        'api/pagos/',
+        views.vista_dashboard_pagos,
+        name='dashboard_pagos'
+    ),
 ]
