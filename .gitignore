@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+
+# Entorno virtual
+venv/
+.env/
+
+# Variables de entorno
+.env
+
+# VS Code
+.vscode/
+
+# Archivos Excel
+*.xlsx
+*.xls
+
+# Media uploads
+media/
+
+# SQLite
+db.sqlite3
+
+# Logs
+*.log
+
+# Django static
+staticfiles/
+
+# Mac
+.DS_Store

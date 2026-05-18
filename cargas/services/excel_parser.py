@@ -106,7 +106,11 @@ def leer_excel(path_archivo):
 
             try:
 
-                fecha_factura = row[1]
+                fecha_factura = pd.to_datetime(
+                row[1],
+                dayfirst=True,
+                errors='coerce'
+                )
 
                 monto_original = limpiar_numero(row[2])
 

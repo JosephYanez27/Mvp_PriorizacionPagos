@@ -8,4 +8,5 @@ urlpatterns = [
     path('', include('dashboard.urls')),
 
     path('cargas/', include('cargas.urls')),
+    path('api/', include('api.urls')),
 ]

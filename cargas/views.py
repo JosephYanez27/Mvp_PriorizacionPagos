@@ -1,3 +1,9 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def vista_subida(request):
+
+    return render(
+        request,
+        'cargas/subir_excel.html'
+    )
