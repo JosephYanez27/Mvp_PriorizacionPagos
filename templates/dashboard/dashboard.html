@@ -1,17 +1,18 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Priorización de Pagos</title>
+    <title>Tesorería Inteligente - Priorización de Pagos</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    
+
     <style>
-        /* Ajustes adicionales para integrar los nuevos componentes limpios */
+        /* Modern UI Tweaks & Enhancements */
         .filter-select {
             padding: 8px 32px 8px 12px;
             border: 1px solid var(--border);
@@ -19,7 +20,7 @@
             outline: none;
             font-family: var(--font-sans);
             background: #ffffff;
-            font-size: 14px;
+            font-size: 13.5px;
             color: var(--text-primary);
             cursor: pointer;
             appearance: none;
@@ -27,14 +28,13 @@
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
             background-repeat: no-repeat;
             background-position: right 10px center;
-            min-width: 190px;
+            min-width: 170px;
+            transition: border-color 0.15s;
         }
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
+        .filter-select:focus {
+            border-color: var(--accent);
         }
+
         .kpi-card-icon {
             display: flex;
             align-items: center;
@@ -45,55 +45,358 @@
             background: rgba(0, 0, 0, 0.04);
             color: var(--text-primary);
         }
-        .kpi-card.danger .kpi-card-icon { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .kpi-card.warning .kpi-card-icon { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-        .kpi-card.success .kpi-card-icon { background: rgba(16, 185, 129, 0.1); color: var(--accent); }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+
+        .kpi-card.danger .kpi-card-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
         }
+
+        .kpi-card.warning .kpi-card-icon {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .kpi-card.success .kpi-card-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+        }
+
+        .kpi-card.info .kpi-card-icon {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--blue);
+        }
+
         .star-container {
             display: flex;
             justify-content: center;
-            gap: 3px;
+            gap: 2px;
         }
+
         .star-svg {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
         }
+
         .nav-btn.primary {
             display: flex;
             align-items: center;
             gap: 6px;
         }
+
+        .nav-btn.secondary-outline {
+            background: #ffffff;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            font-size: 12.5px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.secondary-outline:hover {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            border-color: #d1d5db;
+        }
+
+        .nav-btn.danger-outline {
+            background: #ffffff;
+            color: var(--danger);
+            border: 1px solid #fca5a5;
+            padding: 8px 14px;
+            font-size: 12.5px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.danger-outline:hover {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+        }
+
+        /* Modals styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -45%) scale(0.95);
+            background: #ffffff;
+            width: 100%;
+            max-width: 460px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 201;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .modal-card.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+        }
+
+        .modal-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 22px;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .file-dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 32px 20px;
+            text-align: center;
+            background: var(--bg-panel);
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-dropzone:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .file-dropzone input[type="file"] {
+            display: none;
+        }
+
+        .file-dropzone p {
+            margin: 0;
+            font-size: 12.5px;
+            color: var(--text-secondary);
+        }
+
+        .file-dropzone .file-name-preview {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-dark);
+            display: none;
+            word-break: break-all;
+        }
+
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Summary Stats Display */
+        .summary-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .summary-stat-item {
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+        }
+        .summary-stat-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .summary-stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .summary-list-container {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            background: var(--bg-panel);
+            font-family: var(--font-mono);
+            font-size: 11.5px;
+        }
+        .summary-list-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+
+        /* Dynamic Tabs Layout inside Conciliacion */
+        .conciliacion-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .dropzone-compact {
+            flex: 1;
+            max-width: 420px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            text-align: center;
+            background: var(--bg-panel);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .dropzone-compact:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        /* Tooltips/Helpers */
+        .tooltip-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        /* Blade details styles */
+        .blade-input-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-top: 6px;
+        }
+        .blade-input-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .blade-amount-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .blade-amount-input:focus {
+            border-color: var(--accent);
+        }
+        .error-message {
+            color: var(--danger);
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 4px;
+            display: none;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="shell">
-        
+
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <div class="badge">SISTEMA VIVO</div>
                 <h1>Tesorería Inteligente</h1>
                 <p>Análisis de Riesgo Operativo</p>
             </div>
-            
+
             <nav class="nav-section">
                 <p class="nav-label">Módulos</p>
-                <div class="nav-item active">
+                <div class="nav-item active" id="menu-priorizacion" onclick="switchModule('priorizacion')">
                     <i data-lucide="layers" style="width: 18px; height: 18px;"></i>
                     <span>Priorización Pagos</span>
                 </div>
-                <div class="nav-item">
-                    <i data-lucide="history" style="width: 18px; height: 18px; opacity: 0.7;"></i>
-                    <span>Historial de Giros</span>
+                <div class="nav-item" id="menu-confirmacion" onclick="switchModule('confirmacion')">
+                    <i data-lucide="check-square" style="width: 18px; height: 18px;"></i>
+                    <span>Bandeja de Confirmación</span>
                 </div>
-                <div class="nav-item">
-                    <i data-lucide="settings" style="width: 18px; height: 18px; opacity: 0.7;"></i>
-                    <span>Configuración</span>
+                <div class="nav-item" id="menu-conciliacion" onclick="switchModule('conciliacion')">
+                    <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                    <span>Conciliación y Exportación</span>
                 </div>
             </nav>
 
@@ -104,18 +407,20 @@
                 </div>
                 <div class="sidebar-footer-row">
                     <span>Motor Scoring:</span>
-                    <span class="sidebar-footer-val">v2.1 (Max-Days)</span>
+                    <span class="sidebar-footer-val">v2.5 (Dynamic-Min)</span>
                 </div>
             </div>
         </aside>
 
+        <!-- MAIN PANEL -->
         <main class="main">
-            
+
+            <!-- NAVBAR -->
             <header class="navbar">
                 <div class="navbar-left">
                     <span class="breadcrumb-item">Mvp</span>
                     <span class="breadcrumb-sep">/</span>
-                    <span class="breadcrumb-item active">Dashboard de Priorización</span>
+                    <span class="breadcrumb-item" id="breadcrumb-current-module">Priorización de Pagos</span>
                 </div>
                 <div class="navbar-right">
                     <div class="status-chip">
@@ -126,173 +431,451 @@
                 </div>
             </header>
 
+            <!-- MAIN CONTENT -->
             <div class="content">
-                
-                <section class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
-                        <p class="kpi-label">Total en Fila (Filtrado)</p>
-                        <p class="kpi-value accent" id="kpi-total">$0.00</p>
-                        <p class="kpi-sub" id="kpi-count-prov">0 proveedores cargados</p>
-                    </div>
-                    <div class="kpi-card danger">
-                        <div class="kpi-card-icon"><i data-lucide="shield-alert"></i></div>
-                        <p class="kpi-label">Cuentas en Riesgo Crítico</p>
-                        <p class="kpi-value danger" id="kpi-criticos">0</p>
-                        <p class="kpi-sub">Scoring superior al 75%</p>
-                    </div>
-                    <div class="kpi-card warning">
-                        <div class="kpi-card-icon"><i data-lucide="clock"></i></div>
-                        <p class="kpi-label">Máximo Retraso Detectado</p>
-                        <p class="kpi-value warning" id="kpi-max-dias">0 días</p>
-                        <p class="kpi-sub">Impactando penalizaciones</p>
-                    </div>
-                    <div class="kpi-card success">
-                        <div class="kpi-card-icon"><i data-lucide="star"></i></div>
-                        <p class="kpi-label">Promedio de Estrellas</p>
-                        <p class="kpi-value success" id="kpi-promedio-estrellas">0.0</p>
-                        <p class="kpi-sub">Importancia de la cartera</p>
-                    </div>
-                </section>
 
-                <section class="section-header">
-                    <div>
-                        <h2 class="section-title">Análisis de Dispersión Basado en Riesgo</h2>
-                        <p class="section-subtitle">Filtra la cartera vencida en tiempo real mediante herramientas de precisión.</p>
+                <!-- 1. SECCIÓN: PRIORIZACIÓN PAGOS (SCREEN 1) -->
+                <div id="view-priorizacion" class="view-section">
+                    <section class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
+                            <p class="kpi-label">Total en Fila (Pendiente)</p>
+                            <p class="kpi-value accent" id="kpi-prio-total">$0.00</p>
+                            <p class="kpi-sub" id="kpi-prio-count">0 facturas en cola</p>
+                        </div>
+                        <div class="kpi-card danger">
+                            <div class="kpi-card-icon"><i data-lucide="shield-alert"></i></div>
+                            <p class="kpi-label">Cuentas en Riesgo Crítico</p>
+                            <p class="kpi-value danger" id="kpi-prio-criticos">0</p>
+                            <p class="kpi-sub">Scoring superior al 75%</p>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-card-icon"><i data-lucide="clock"></i></div>
+                            <p class="kpi-label">Máximo Retraso Detectado</p>
+                            <p class="kpi-value warning" id="kpi-prio-max-retraso">0 días</p>
+                            <p class="kpi-sub">Retraso de la factura más vieja</p>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-card-icon"><i data-lucide="star"></i></div>
+                            <p class="kpi-label">Promedio de Estrellas</p>
+                            <p class="kpi-value success" id="kpi-prio-avg-estrellas">0.0</p>
+                            <p class="kpi-sub">Importancia de la cartera</p>
+                        </div>
+                    </section>
+
+                    <section class="section-header">
+                        <div>
+                            <h2 class="section-title">Cola de Priorización de Pagos</h2>
+                            <p class="section-subtitle">Visualiza y audita facturas pendientes priorizadas algorítmicamente por el motor de riesgo.</p>
+                        </div>
+                    </section>
+
+                    <div class="filter-bar">
+                        <div style="position: relative; width: 280px;">
+                            <input type="text" id="searchInputPrio" placeholder="Buscar por folio o proveedor..."
+                                style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; font-family: var(--font-sans); font-size: 14px;">
+                            <i data-lucide="search"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); opacity: 0.7;"></i>
+                        </div>
+
+                        <select id="starFilterPrio" class="filter-select">
+                            <option value="all">★ Todos los Niveles</option>
+                            <option value="5">★★★★★ 5 Estrellas</option>
+                            <option value="4">★★★★ 4 Estrellas</option>
+                            <option value="3">★★★ 3 Estrellas</option>
+                            <option value="2">★★ 2 Estrellas</option>
+                            <option value="1">★ 1 Estrella</option>
+                        </select>
+
+                        <button id="sortBtnPrio" class="nav-btn primary" style="margin-left: auto; padding: 8px 14px; font-size: 12.5px;">
+                            <span>Scoring: Mayor a Menor</span>
+                            <i data-lucide="arrow-down-narrow-wide" id="sort-icon-prio" style="width: 14px; height: 14px;"></i>
+                        </button>
+
+                        <button id="openUploadBtn" class="nav-btn secondary-outline" onclick="abrirModalCarga()">
+                            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                            <span>Importar Facturas</span>
+                        </button>
                     </div>
-                </section>
 
-                <div class="filter-bar">
-                    <div style="position: relative; width: 280px;">
-                        <input type="text" id="searchInput" placeholder="Buscar proveedor..." 
-                               style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; font-family: var(--font-sans); font-size: 14px;">
-                        <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); opacity: 0.7;"></i>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 70px; text-align: center;">Scoring</th>
+                                    <th>Folio</th>
+                                    <th>Proveedor</th>
+                                    <th style="text-align: center;">Prioridad</th>
+                                    <th style="text-align: center;">Vencimiento</th>
+                                    <th style="text-align: center;">Moneda</th>
+                                    <th style="text-align: right;">Total Original</th>
+                                    <th style="text-align: right;">Saldo Neto (MXN)</th>
+                                    <th style="text-align: center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBodyPrio"></tbody>
+                        </table>
                     </div>
-
-                    <select id="starFilter" class="filter-select">
-                        <option value="all">★ Todos los Niveles</option>
-                        <option value="5">★★★★★ 5 Estrellas</option>
-                        <option value="4">★★★★ 4 Estrellas</option>
-                        <option value="3">★★★ 3 Estrellas</option>
-                        <option value="2">★★ 2 Estrellas</option>
-                        <option value="1">★ 1 Estrella</option>
-                    </select>
-
-                    <button id="sortBtn" class="nav-btn primary" style="margin-left: auto; padding: 8px 14px; font-size: 12px;">
-                        <span>Scoring: Mayor a Menor</span>
-                        <i data-lucide="arrow-down-narrow-wide" id="sort-icon" style="width: 14px; height: 14px;"></i>
-                    </button>
                 </div>
 
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Proveedor</th>
-                                <th style="text-align: right;">Cantidad a Dispersar</th>
-                                <th style="text-align: center;">Nivel (Estrellas)</th>
-                                <th style="text-align: center;">Días Vencidos</th>
-                                <th>Scoring de Riesgo</th>
-                                <th style="text-align: center;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
+                <!-- 2. SECCIÓN: BANDEJA DE CONFIRMACIÓN (SCREEN 2 TAB A) -->
+                <div id="view-confirmacion" class="view-section" style="display: none;">
+                    <section class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="kpi-card success">
+                            <div class="kpi-card-icon"><i data-lucide="check-circle-2"></i></div>
+                            <p class="kpi-label">Monto Total Pre-Autorizado</p>
+                            <p class="kpi-value success" id="kpi-conf-total">$0.00</p>
+                            <p class="kpi-sub" id="kpi-conf-count">0 facturas pre-aprobadas</p>
+                        </div>
+                        <div class="kpi-card info">
+                            <div class="kpi-card-icon"><i data-lucide="file-check"></i></div>
+                            <p class="kpi-label">Facturas en Espera de Confirmación</p>
+                            <p class="kpi-value accent" id="kpi-conf-pending-count">0</p>
+                            <p class="kpi-sub">Listas para confirmación de pago</p>
+                        </div>
+                    </section>
+
+                    <section class="section-header">
+                        <div>
+                            <h2 class="section-title">Bandeja de Confirmación de Pagos</h2>
+                            <p class="section-subtitle">Realiza la segunda validación de las facturas pre-aprobadas antes de enviarlas al lote de exportación bancaria.</p>
+                        </div>
+                    </section>
+
+                    <div class="filter-bar">
+                        <div style="position: relative; width: 320px; margin-bottom: 4px;">
+                            <input type="text" id="searchInputConf" placeholder="Buscar por folio o proveedor..."
+                                style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; font-family: var(--font-sans); font-size: 14px;">
+                            <i data-lucide="search"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); opacity: 0.7;"></i>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Proveedor</th>
+                                    <th style="text-align: right;">Total MXN</th>
+                                    <th style="text-align: right;">Saldo Neto</th>
+                                    <th style="text-align: right; color: var(--success);">Abono Autorizado</th>
+                                    <th style="text-align: center;">Días Vencidos</th>
+                                    <th style="text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBodyConf"></tbody>
+                        </table>
+                    </div>
                 </div>
 
+                <!-- 3. SECCIÓN: CONCILIACIÓN Y EXPORTACIÓN (SCREEN 2 TAB B) -->
+                <div id="view-conciliacion" class="view-section" style="display: none;">
+                    <section class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="kpi-card info">
+                            <div class="kpi-card-icon"><i data-lucide="layers-3"></i></div>
+                            <p class="kpi-label">Monto Lote Confirmado</p>
+                            <p class="kpi-value accent" id="kpi-conc-total">$0.00</p>
+                            <p class="kpi-sub" id="kpi-conc-count">0 facturas listas para dispersar</p>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-card-icon"><i data-lucide="clipboard-check"></i></div>
+                            <p class="kpi-label">Dispersión y Conciliación</p>
+                            <p class="kpi-value success">Remesa</p>
+                            <p class="kpi-sub">Descarga layout y sube retorno del banco</p>
+                        </div>
+                    </section>
+
+                    <section class="section-header">
+                        <div>
+                            <h2 class="section-title">Layout de Pagos y Conciliación Bancaria</h2>
+                            <p class="section-subtitle">Genera el reporte de pagos autorizado para el banco y concilia los estados de cuenta devueltos.</p>
+                        </div>
+                    </section>
+
+                    <div class="conciliacion-controls">
+                        <div>
+                            <button class="nav-btn primary" onclick="descargarRemesaExcel()" style="padding: 12px 24px; font-size: 13.5px; font-weight: 600;">
+                                <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+                                <span>Descargar Layout de Pagos Bancarios</span>
+                            </button>
+                            <span class="tooltip-info">
+                                <i data-lucide="info" style="width: 12px; height: 12px;"></i>
+                                Genera el layout en Excel con las facturas CONFIRMADAS.
+                            </span>
+                        </div>
+
+                        <form id="formConciliacion" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="dropzone-compact" onclick="document.getElementById('conciliacionFileInput').click()">
+                                <i data-lucide="upload-cloud" style="width: 22px; height: 22px; color: var(--accent);"></i>
+                                <span id="dropzone-compact-text">Subir Retorno del Banco (.xlsx)</span>
+                                <input type="file" id="conciliacionFileInput" accept=".xlsx, .xls" style="display: none;" onchange="ejecutarConciliacion(this)">
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Proveedor</th>
+                                    <th style="text-align: right;">Total MXN</th>
+                                    <th style="text-align: right; color: var(--accent-dark);">Abono Confirmado</th>
+                                    <th style="text-align: center;">Moneda</th>
+                                    <th style="text-align: center;">Vencimiento</th>
+                                    <th style="text-align: center;">Estatus Operativo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBodyConc"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- EMPTY STATE -->
                 <div id="emptyState" style="display: none; padding: 48px; text-align: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-top: 16px;">
-                    <p style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Ningún registro coincide con los criterios de búsqueda o filtrado.</p>
+                    <p style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Ningún registro coincide con los criterios en este módulo.</p>
                 </div>
 
             </div>
         </main>
     </div>
 
+    <!-- AUDITING BLADE (SIDE DRAWER) -->
     <div id="blade-overlay"></div>
     <div id="blade">
         <div class="blade-header">
             <div>
-                <h3 class="blade-title" id="blade-prov-name">Detalle del Proveedor</h3>
-                <p class="blade-subtitle">Evaluación algorítmica para toma de decisiones inmediatas.</p>
+                <h3 class="blade-title" id="blade-folio">Folio Factura</h3>
+                <p class="blade-subtitle" id="blade-prov-name">Proveedor Detalle</p>
             </div>
             <button class="blade-close" id="closeBladeBtn">×</button>
         </div>
-        
+
         <div class="blade-body">
             <div class="info-grid">
                 <div class="info-item">
-                    <p class="info-item-label">Monto Solicitado</p>
-                    <p class="info-item-value" id="blade-monto">$0.00</p>
+                    <p class="info-item-label">Monto Original</p>
+                    <p class="info-item-value" id="blade-monto-orig">$0.00</p>
                 </div>
                 <div class="info-item">
-                    <p class="info-item-label">Índice de Riesgo</p>
-                    <p class="info-item-value" id="blade-score">0%</p>
+                    <p class="info-item-label">Monto Equivalente MXN</p>
+                    <p class="info-item-value" id="blade-monto-mxn">$0.00</p>
+                </div>
+                <div class="info-item">
+                    <p class="info-item-label">Total Factura</p>
+                    <p class="info-item-value" id="blade-total">$0.00</p>
+                </div>
+                <div class="info-item">
+                    <p class="info-item-label">Saldo Neto Pendiente</p>
+                    <p class="info-item-value text-accent" id="blade-saldo-neto">$0.00</p>
                 </div>
             </div>
 
             <div class="alert-box critical" id="blade-alert-zone">
-                <p class="alert-label" id="blade-alert-title">Atención Estratégica Requerida</p>
-                <p class="alert-text" id="blade-alert-desc">Este proveedor presenta un retraso considerable que compromete la cadena de suministros.</p>
+                <p class="alert-label" id="blade-alert-title">Riesgo Crítico Operativo</p>
+                <p class="alert-text" id="blade-alert-desc">Riesgo calculado por antigüedad y scoring comercial.</p>
             </div>
 
             <div>
-                <p class="justificacion-label">Factores Incidentes</p>
+                <p class="justificacion-label">Factores de Riesgo</p>
                 <div class="causa-row">
-                    <span class="causa-label">Importancia Comercial (Estrellas)</span>
+                    <span class="causa-label">Calificación Comercial (Estrellas)</span>
                     <span class="causa-badge causa-adm" id="blade-factor-prov">0 / 5</span>
                 </div>
                 <div class="causa-row">
-                    <span class="causa-label">Vencimiento de Facturas</span>
+                    <span class="causa-label">Antigüedad de Vencimiento</span>
                     <span class="causa-badge causa-prov" id="blade-factor-tiempo">0 días</span>
                 </div>
+            </div>
+
+            <!-- INPUTS FOR ACTION -->
+            <div class="blade-input-container">
+                <p class="blade-input-label">Monto de Abono Autorizado (MXN)</p>
+                <input type="number" id="abonoInput" step="0.01" class="blade-amount-input" placeholder="0.00">
+                <span class="error-message" id="abono-error-msg">El abono excede el saldo de la factura.</span>
+
+                <p class="blade-input-label" style="margin-top: 14px;">Notas de Auditoría (Opcional)</p>
+                <textarea id="notasAuditoriaInput" class="justificacion-input" placeholder="Escribe notas de tesorería y motivos de dispersión..."></textarea>
             </div>
         </div>
 
         <div class="blade-footer">
-            <p class="justificacion-label">Justificación Operativa (Opcional)</p>
-            <textarea class="justificacion-input" placeholder="Escribe notas de tesorería..."></textarea>
             <div class="blade-actions">
-                <button class="action-btn rechazar" onclick="ejecutarAccionBlade('Rechazado')">Postponer</button>
-                <button class="action-btn ajustar" onclick="ejecutarAccionBlade('Ajustado')">Reestructurar</button>
-                <button class="action-btn aprobar" onclick="ejecutarAccionBlade('Aprobado')">Autorizar Pago</button>
+                <button class="action-btn rechazar" id="cancelBladeBtn">Cancelar</button>
+                <button class="action-btn aprobar" id="confirmAutorizarBtn">Autorizar Pago</button>
             </div>
         </div>
     </div>
 
+    <!-- MODAL CARGAR FACTURAS (EXCEL IMPORT) -->
+    <div id="upload-modal-overlay" class="modal-overlay"></div>
+    <div id="upload-modal" class="modal-card">
+        <div class="modal-header">
+            <h3>Subir Lote de Facturas</h3>
+            <button class="modal-close" onclick="cerrarModalCarga()">×</button>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="modal-body" id="formSubirExcel">
+            {% csrf_token %}
+            <div class="file-dropzone" onclick="document.getElementById('excelFileInput').click()">
+                <i data-lucide="upload-cloud" style="width: 36px; height: 36px; color: var(--text-muted); opacity: 0.8;"></i>
+                <p id="dropzone-text">Haz clic aquí para seleccionar tu archivo Excel (.xlsx, .xls)</p>
+                <span id="file-name-preview" class="file-name-preview"></span>
+                <input type="file" name="archivo" id="excelFileInput" accept=".xlsx, .xls" required>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="nav-btn secondary-outline" onclick="cerrarModalCarga()">Cancelar</button>
+                <button type="submit" class="nav-btn primary" id="submitBtn">Importar Facturas</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- MODAL RESULTADOS CONCILIACIÓN -->
+    <div id="conciliacion-modal-overlay" class="modal-overlay"></div>
+    <div id="conciliacion-modal" class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Resumen de Conciliación Bancaria</h3>
+            <button class="modal-close" onclick="cerrarModalConciliacion()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="summary-stat-grid">
+                <div class="summary-stat-item" style="border-left: 3px solid var(--success);">
+                    <div class="summary-stat-label">Facturas Pagadas</div>
+                    <div class="summary-stat-value text-success" id="rec-stat-matched">0</div>
+                </div>
+                <div class="summary-stat-item" style="border-left: 3px solid var(--danger);">
+                    <div class="summary-stat-label">Folios No Encontrados</div>
+                    <div class="summary-stat-value text-danger" id="rec-stat-notfound">0</div>
+                </div>
+                <div class="summary-stat-item" style="border-left: 3px solid var(--warning);">
+                    <div class="summary-stat-label">Ya Estaban Pagadas</div>
+                    <div class="summary-stat-value text-warn" id="rec-stat-already">0</div>
+                </div>
+                <div class="summary-stat-item" style="border-left: 3px solid var(--blue);">
+                    <div class="summary-stat-label">Estado Incorrecto</div>
+                    <div class="summary-stat-value text-accent" id="rec-stat-wrong">0</div>
+                </div>
+            </div>
+
+            <div class="summary-list-title">Folios Conciliados con Éxito:</div>
+            <div class="summary-list-container text-success" id="rec-list-matched">Ninguno</div>
+
+            <div class="summary-list-title">Folios No Encontrados en Sistema:</div>
+            <div class="summary-list-container text-danger" id="rec-list-notfound">Ninguno</div>
+        </div>
+        <div class="modal-footer">
+            <button class="nav-btn primary" onclick="cerrarModalConciliacion()">Entendido</button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
     <div id="toast">Operación procesada con éxito.</div>
 
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
-        let rawData = [];
-        let currentData = [];
-        let isSortDesc = true;
-        let selectedStarFilter = 'all';
+        // GLOBALS
+        let activeModule = 'priorizacion';
+        let facturasPrio = [];
+        let facturasConf = [];
+        let facturasConc = [];
+        let currentPrioList = [];
+        let currentConfList = [];
+        let currentConcList = [];
 
-        const tableBody = document.getElementById('tableBody');
+        let isSortPrioDesc = true;
+        let selectedStarPrioFilter = 'all';
+
+        // DOM ELEMENTS
+        const viewPrio = document.getElementById('view-priorizacion');
+        const viewConf = document.getElementById('view-confirmacion');
+        const viewConc = document.getElementById('view-conciliacion');
+
+        const menuPrio = document.getElementById('menu-priorizacion');
+        const menuConf = document.getElementById('menu-confirmacion');
+        const menuConc = document.getElementById('menu-conciliacion');
+
+        const tableBodyPrio = document.getElementById('tableBodyPrio');
+        const tableBodyConf = document.getElementById('tableBodyConf');
+        const tableBodyConc = document.getElementById('tableBodyConc');
+
         const emptyState = document.getElementById('emptyState');
-        const searchInput = document.getElementById('searchInput');
-        const starFilter = document.getElementById('starFilter');
-        const sortBtn = document.getElementById('sortBtn');
-        const sortIcon = document.getElementById('sort-icon');
-        
+
+        const searchInputPrio = document.getElementById('searchInputPrio');
+        const searchInputConf = document.getElementById('searchInputConf');
+        const starFilterPrio = document.getElementById('starFilterPrio');
+        const sortBtnPrio = document.getElementById('sortBtnPrio');
+        const sortIconPrio = document.getElementById('sort-icon-prio');
+
         const bladeOverlay = document.getElementById('blade-overlay');
         const blade = document.getElementById('blade');
-        const closeBladeBtn = document.getElementById('closeBladeBtn');
 
+        const excelFileInput = document.getElementById('excelFileInput');
+        const dropzoneText = document.getElementById('dropzone-text');
+        const fileNamePreview = document.getElementById('file-name-preview');
+
+        // Formats numbers cleanly into currency float strings
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
         };
 
-        // CONSTRUCTOR DINÁMICO DE ESTRELLAS VECTORIALES (SVG) PARA LA TABLA
+        const showToast = (message, isSuccess = true) => {
+            const toast = document.getElementById('toast');
+            toast.className = isSuccess ? 'ok' : 'fail';
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3500);
+        };
+
+        // Switching Active Module Dashboard
+        const switchModule = (moduleName) => {
+            activeModule = moduleName;
+            
+            // Remove active classes
+            menuPrio.classList.remove('active');
+            menuConf.classList.remove('active');
+            menuConc.classList.remove('active');
+
+            // Hide views
+            viewPrio.style.display = 'none';
+            viewConf.style.display = 'none';
+            viewConc.style.display = 'none';
+
+            // Reset Search inputs
+            searchInputPrio.value = '';
+            searchInputConf.value = '';
+
+            emptyState.style.display = 'none';
+
+            if (moduleName === 'priorizacion') {
+                menuPrio.classList.add('active');
+                viewPrio.style.display = 'block';
+                document.getElementById('breadcrumb-current-module').textContent = "Priorización de Pagos";
+                cargarDatosPrio();
+            } else if (moduleName === 'confirmacion') {
+                menuConf.classList.add('active');
+                viewConf.style.display = 'block';
+                document.getElementById('breadcrumb-current-module').textContent = "Bandeja de Confirmación";
+                cargarDatosConf();
+            } else if (moduleName === 'conciliacion') {
+                menuConc.classList.add('active');
+                viewConc.style.display = 'block';
+                document.getElementById('breadcrumb-current-module').textContent = "Conciliación y Exportación";
+                cargarDatosConc();
+            }
+            lucide.createIcons();
+        };
+
+        // BUILD STAR LOGIC
         const buildStarsHtml = (starsCount) => {
             let html = '<div class="star-container">';
             for (let i = 1; i <= 5; i++) {
                 if (i <= starsCount) {
-                    // Estrella Activa (Dorado corporativo premium)
                     html += `<svg class="star-svg" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
                 } else {
-                    // Estrella Inactiva (Gris sutil calado)
                     html += `<svg class="star-svg" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
                 }
             }
@@ -301,118 +884,154 @@
         };
 
         const buildScoreCell = (score) => {
-            let metricClass = 'low';
+            let metricClass = 'high';
             if (score >= 75) metricClass = 'low';
             else if (score >= 50) metricClass = 'mid';
             else metricClass = 'high';
-            
+
             return `
-                <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
                     <span class="score-cell ${metricClass}">${score}%</span>
-                    <div style="flex: 1; background: var(--border); height: 6px; border-radius: 3px; overflow: hidden; min-width: 80px;">
+                    <div style="flex: 1; background: var(--border); height: 6px; border-radius: 3px; overflow: hidden; min-width: 60px;">
                         <div style="width: ${score}%; height: 100%; background: ${score >= 75 ? 'var(--danger)' : score >= 50 ? 'var(--warning)' : 'var(--accent)'}; border-radius: 3px;"></div>
                     </div>
                 </div>
             `;
         };
 
-        const renderTable = () => {
-            tableBody.innerHTML = '';
+        // --- MODULE 1: PRIORITIZATION PAGOS ---
+        const cargarDatosPrio = async () => {
+            try {
+                tableBodyPrio.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Conectando con el scoring de facturas pendientes...</td></tr>`;
+                
+                const response = await fetch('/api/pagos/');
+                if (!response.ok) throw new Error('Respuesta de red inválida.');
+
+                facturasPrio = await response.json();
+                filtrarDatosPrio();
+            } catch (error) {
+                console.error("Error al cargar prioritarios:", error);
+                tableBodyPrio.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ Fallo de Sincronización: No se pudieron extraer las facturas pendientes.</td></tr>`;
+            }
+        };
+
+        const filtrarDatosPrio = () => {
+            const search = searchInputPrio.value.toLowerCase().trim();
             
-            if (currentData.length === 0) {
+            currentPrioList = facturasPrio.filter(f => {
+                const matchesSearch = f.proveedor.toLowerCase().includes(search) || f.folio.toLowerCase().includes(search);
+                const matchesStars = selectedStarPrioFilter === 'all' || Math.floor(f.estrellas).toString() === selectedStarPrioFilter;
+                return matchesSearch && matchesStars;
+            });
+
+            currentPrioList.sort((a, b) => {
+                return isSortPrioDesc ? (b.scoring - a.scoring) : (a.scoring - b.scoring);
+            });
+
+            renderTablePrio();
+        };
+
+        const renderTablePrio = () => {
+            tableBodyPrio.innerHTML = '';
+            if (currentPrioList.length === 0) {
                 emptyState.style.display = 'block';
-                actualizarKPIs(0, 0, 0, 0);
+                actualizarKPIsPrio(0, 0, 0, 0);
                 return;
             }
             emptyState.style.display = 'none';
 
-            let acumuladoMonto = 0;
+            let totalSaldoNeto = 0;
             let cuentasCriticas = 0;
             let maxRetraso = 0;
             let sumaEstrellas = 0;
 
-            currentData.forEach((item, index) => {
-                acumuladoMonto += item.cantidad_a_pagar;
-                if (item.scoring >= 75) cuentasCriticas++;
-                if (item.dias_vencidos > maxRetraso) maxRetraso = item.dias_vencidos;
-                sumaEstrellas += item.prioridad_estrellas;
+            currentPrioList.forEach((f, idx) => {
+                totalSaldoNeto += f.saldo_neto;
+                if (f.scoring >= 75) cuentasCriticas++;
+                if (f.dias_vencidos > maxRetraso) maxRetraso = f.dias_vencidos;
+                sumaEstrellas += f.estrellas;
 
                 let urgencyClass = 'urgency-baja';
-                if (item.dias_vencidos >= 60) urgencyClass = 'urgency-paro';
-                else if (item.dias_vencidos >= 30) urgencyClass = 'urgency-alta';
-                else if (item.dias_vencidos > 0) urgencyClass = 'urgency-media';
+                if (f.dias_vencidos >= 90) urgencyClass = 'urgency-paro';
+                else if (f.dias_vencidos >= 60) urgencyClass = 'urgency-alta';
+                else if (f.dias_vencidos >= 30) urgencyClass = 'urgency-media';
 
                 const tr = document.createElement('tr');
                 tr.style.cursor = 'pointer';
                 tr.innerHTML = `
-                    <td style="font-weight: 600; color: var(--text-primary);">${item.proveedor}</td>
-                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 500; color: var(--text-secondary);">${formatCurrency(item.cantidad_a_pagar)}</td>
-                    <td style="text-align: center;">${buildStarsHtml(item.prioridad_estrellas)}</td>
-                    <td style="text-align: center;"><span class="${urgencyClass}">${item.dias_vencidos} días</span></td>
-                    <td>${buildScoreCell(item.scoring)}</td>
+                    <td style="width: 100px;">${buildScoreCell(f.scoring)}</td>
+                    <td style="font-weight: 600; color: var(--text-primary); font-family: var(--font-mono);">${f.folio}</td>
+                    <td style="font-weight: 500;">${f.proveedor}</td>
+                    <td style="text-align: center;">${buildStarsHtml(f.estrellas)}</td>
+                    <td style="text-align: center;"><span class="${urgencyClass}">${f.dias_vencidos} días</span></td>
+                    <td style="text-align: center; font-family: var(--font-mono); font-size: 12px;">${f.moneda}</td>
+                    <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.monto_original)}</td>
+                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">${formatCurrency(f.saldo_neto)}</td>
                     <td style="text-align: center;">
-                        <button class="review-btn" onclick="abrirDetalleBlade(${index}); event.stopPropagation();">Auditar</button>
+                        <button class="review-btn" onclick="abrirDetalleBlade(${idx}); event.stopPropagation();">Auditar</button>
                     </td>
                 `;
-                tr.addEventListener('click', () => abrirDetalleBlade(index));
-                tableBody.appendChild(tr);
+                tr.addEventListener('click', () => abrirDetalleBlade(idx));
+                tableBodyPrio.appendChild(tr);
             });
 
-            const promedioEstrellas = (sumaEstrellas / currentData.length).toFixed(1);
-            actualizarKPIs(acumuladoMonto, cuentasCriticas, maxRetraso, promedioEstrellas);
+            const avgEstrellas = (sumaEstrellas / currentPrioList.length).toFixed(1);
+            actualizarKPIsPrio(totalSaldoNeto, cuentasCriticas, maxRetraso, avgEstrellas);
         };
 
-        const actualizarKPIs = (total, criticos, maxDias, promEstrellas) => {
-            document.getElementById('kpi-total').textContent = formatCurrency(total);
-            document.getElementById('kpi-count-prov').textContent = `${currentData.length} proveedores en cola`;
-            document.getElementById('kpi-criticos').textContent = criticos;
-            document.getElementById('kpi-max-dias').textContent = `${maxDias} días`;
-            document.getElementById('kpi-promedio-estrellas').textContent = isNaN(promEstrellas) ? '0.0' : promEstrellas;
+        const actualizarKPIsPrio = (total, criticas, maxDias, promEstrellas) => {
+            document.getElementById('kpi-prio-total').textContent = formatCurrency(total);
+            document.getElementById('kpi-prio-count').textContent = `${currentPrioList.length} facturas en fila`;
+            document.getElementById('kpi-prio-criticos').textContent = criticas;
+            document.getElementById('kpi-prio-max-retraso').textContent = `${maxDias} días`;
+            document.getElementById('kpi-prio-avg-estrellas').textContent = isNaN(promEstrellas) ? '0.0' : promEstrellas;
         };
 
-        const applyFilters = () => {
-            const searchTerm = searchInput.value.toLowerCase();
 
-            currentData = rawData.filter(item => {
-                const matchesSearch = item.proveedor.toLowerCase().includes(searchTerm);
-                const matchesStars = selectedStarFilter === 'all' || item.prioridad_estrellas.toString() === selectedStarFilter;
-                return matchesSearch && matchesStars;
-            });
+        // --- AUDITING SIDE BLADE (Priorizacion) ---
+        let selectedPrioIndex = null;
 
-            currentData.sort((a, b) => {
-                return isSortDesc ? (b.scoring - a.scoring) : (a.scoring - b.scoring);
-            });
+        const abrirDetalleBlade = (idx) => {
+            selectedPrioIndex = idx;
+            const f = currentPrioList[idx];
+            if (!f) return;
 
-            renderTable();
-        };
+            document.getElementById('blade-folio').textContent = `Factura ${f.folio}`;
+            document.getElementById('blade-prov-name').textContent = f.proveedor;
+            document.getElementById('blade-monto-orig').textContent = `${formatCurrency(f.monto_original)} ${f.moneda}`;
+            document.getElementById('blade-monto-mxn').textContent = formatCurrency(f.monto_mxn);
+            document.getElementById('blade-total').textContent = formatCurrency(f.total);
+            document.getElementById('blade-saldo-neto').textContent = formatCurrency(f.saldo_neto);
 
-        const abrirDetalleBlade = (indexInCurrent) => {
-            const item = currentData[indexInCurrent];
-            if (!item) return;
+            document.getElementById('blade-factor-prov').textContent = `${f.estrellas} / 5 Estrellas`;
+            document.getElementById('blade-factor-tiempo').textContent = `${f.dias_vencidos} días de retraso`;
 
-            document.getElementById('blade-prov-name').textContent = item.proveedor;
-            document.getElementById('blade-monto').textContent = formatCurrency(item.cantidad_a_pagar);
-            document.getElementById('blade-score').textContent = `${item.scoring}%`;
-            document.getElementById('blade-factor-prov').textContent = `${item.prioridad_estrellas} / 5 Estrellas`;
-            document.getElementById('blade-factor-tiempo').textContent = `${item.dias_vencidos} días de retraso`;
+            // Input default to complete pending balance
+            const abonoInput = document.getElementById('abonoInput');
+            abonoInput.value = f.saldo_neto;
+            abonoInput.max = f.saldo_neto;
+            document.getElementById('abono-error-msg').style.display = 'none';
 
+            document.getElementById('notasAuditoriaInput').value = f.notas_auditoria || '';
+
+            // Handle Scoring Card Zone Color
             const alertZone = document.getElementById('blade-alert-zone');
             const alertTitle = document.getElementById('blade-alert-title');
             const alertDesc = document.getElementById('blade-alert-desc');
+            alertZone.className = 'alert-box';
 
-            alertZone.className = 'alert-box'; 
-            if (item.scoring >= 75) {
+            if (f.scoring >= 75) {
                 alertZone.classList.add('critical');
-                alertTitle.textContent = 'Riesgo Crítico Operativo';
-                alertDesc.textContent = 'Prioridad de pago de emergencia. Supera el umbral de tolerancia por acumulación de retrasos.';
-            } else if (item.scoring >= 50) {
+                alertTitle.textContent = `Riesgo Crítico: Scoring ${f.scoring}%`;
+                alertDesc.textContent = 'Prioridad de pago de emergencia. Supera el umbral operativo por acumulación grave de días de retraso.';
+            } else if (f.scoring >= 50) {
                 alertZone.classList.add('warning');
-                alertTitle.textContent = 'Atención Intermedia';
-                alertDesc.textContent = 'Evolución moderada de deuda. Se recomienda revisar plazos comerciales.';
+                alertTitle.textContent = `Atención Moderada: Scoring ${f.scoring}%`;
+                alertDesc.textContent = 'Evolución de deuda intermedia. Monitorear penalidades del contrato comercial.';
             } else {
                 alertZone.classList.add('info');
-                alertTitle.textContent = 'Estatus Controlado';
-                alertDesc.textContent = 'Parámetros óptimos de salud financiera. La cuenta no registra incidencias.';
+                alertTitle.textContent = `Estatus Controlado: Scoring ${f.scoring}%`;
+                alertDesc.textContent = 'Parámetros saludables. Factura con vencimiento reciente, bajo riesgo operativo.';
             }
 
             bladeOverlay.classList.add('open');
@@ -422,60 +1041,423 @@
         const cerrarBlade = () => {
             bladeOverlay.classList.remove('open');
             blade.classList.remove('open');
+            selectedPrioIndex = null;
         };
 
-        const ejecutarAccionBlade = (accion) => {
-            const provName = document.getElementById('blade-prov-name').textContent;
-            cerrarBlade();
-            
-            const toast = document.getElementById('toast');
-            toast.className = 'ok';
-            toast.textContent = `Proveedor "${provName}" marcado como: ${accion} correctamente.`;
-            toast.classList.add('show');
-            
-            setTimeout(() => { toast.classList.remove('show'); }, 3500);
-        };
+        // Action Authorize Invoice (POST to `/api/facturas/{id}/autorizar/`)
+        document.getElementById('confirmAutorizarBtn').addEventListener('click', async () => {
+            if (selectedPrioIndex === null) return;
+            const f = currentPrioList[selectedPrioIndex];
+            if (!f) return;
 
-        const cargarDatosVivos = async () => {
+            const abonoVal = parseFloat(document.getElementById('abonoInput').value);
+            const notasVal = document.getElementById('notasAuditoriaInput').value.trim();
+            const errorMsg = document.getElementById('abono-error-msg');
+
+            // Validations
+            if (isNaN(abonoVal) || abonoVal < 0) {
+                errorMsg.textContent = "El abono no puede ser negativo ni vacío.";
+                errorMsg.style.display = 'block';
+                return;
+            }
+            if (abonoVal > f.saldo_neto) {
+                errorMsg.textContent = `El abono no puede superar el saldo neto disponible (${formatCurrency(f.saldo_neto)}).`;
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+
             try {
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Estableciendo conexión y mapeando variables de riesgo...</td></tr>`;
-                
-                const response = await fetch('/api/pagos/');
-                if (!response.ok) throw new Error('Respuesta de red inválida desde el servidor.');
-                
-                rawData = await response.json();
-                applyFilters();
+                const response = await fetch(`/api/facturas/${f.id}/autorizar/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        notas_auditoria: notasVal,
+                        abono: abonoVal
+                    })
+                });
+
+                const res = await response.json();
+
+                if (res.ok) {
+                    showToast(`Factura ${f.folio} autorizada correctamente por ${formatCurrency(abonoVal)}.`);
+                    cerrarBlade();
+                    // Refresh Prio list (remove from UI list)
+                    cargarDatosPrio();
+                } else {
+                    showToast(`Error al autorizar: ${res.error}`, false);
+                }
+            } catch (err) {
+                console.error("Error en autorización:", err);
+                showToast("Fallo de comunicación con el servidor.", false);
+            }
+        });
+
+
+        // --- MODULE 2: BANDEJA DE CONFIRMACIÓN (SCREEN 2 TAB A) ---
+        const cargarDatosConf = async () => {
+            try {
+                tableBodyConf.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Cargando lote de pre-autorizaciones...</td></tr>`;
+
+                const response = await fetch('/api/aprobados/');
+                if (!response.ok) throw new Error('Respuesta inválida.');
+
+                facturasConf = await response.json();
+                filtrarDatosConf();
             } catch (error) {
-                console.error("Error operativo:", error);
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ Fallo de Sincronización: No se pudieron extraer las facturas.</td></tr>`;
+                console.error("Error al cargar aprobados:", error);
+                tableBodyConf.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ No se pudieron extraer las facturas aprobadas.</td></tr>`;
             }
         };
 
-        // CAPTURA EL CAMBIO DE LA NUEVA LISTA DESPLEGABLE
-        starFilter.addEventListener('change', (e) => {
-            selectedStarFilter = e.target.value;
-            applyFilters();
+        const filtrarDatosConf = () => {
+            const search = searchInputConf.value.toLowerCase().trim();
+            currentConfList = facturasConf.filter(f => {
+                return f.proveedor.toLowerCase().includes(search) || f.folio.toLowerCase().includes(search);
+            });
+            renderTableConf();
+        };
+
+        const renderTableConf = () => {
+            tableBodyConf.innerHTML = '';
+            if (currentConfList.length === 0) {
+                emptyState.style.display = 'block';
+                actualizarKPIsConf(0, 0);
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            let totalAbonado = 0;
+
+            currentConfList.forEach((f, idx) => {
+                totalAbonado += f.total_abonado;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600; font-family: var(--font-mono);">${f.folio}</td>
+                    <td>${f.proveedor}</td>
+                    <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.monto_mxn)}</td>
+                    <td style="text-align: right; font-family: var(--font-mono); color: var(--text-muted);">${formatCurrency(f.saldo_neto)}</td>
+                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--success);">${formatCurrency(f.total_abonado)}</td>
+                    <td style="text-align: center;">${f.dias_vencidos} días</td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <button class="nav-btn primary" onclick="confirmarFactura(${f.id}, '${f.folio}')" style="padding: 5px 12px; font-size: 11px;">
+                                <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+                                Confirmar
+                            </button>
+                            <button class="nav-btn danger-outline" onclick="revertirFactura(${f.id}, '${f.folio}')" style="padding: 5px 12px; font-size: 11px;">
+                                <i data-lucide="undo" style="width: 12px; height: 12px;"></i>
+                                Deshacer
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBodyConf.appendChild(tr);
+            });
+
+            actualizarKPIsConf(totalAbonado, currentConfList.length);
+            lucide.createIcons();
+        };
+
+        const actualizarKPIsConf = (total, count) => {
+            document.getElementById('kpi-conf-total').textContent = formatCurrency(total);
+            document.getElementById('kpi-conf-count').textContent = `${count} facturas pre-aprobadas`;
+            document.getElementById('kpi-conf-pending-count').textContent = count;
+        };
+
+        // Actions: Confirm Invoice (POST to `/api/facturas/{id}/confirmar/`)
+        const confirmarFactura = async (id, folio) => {
+            try {
+                const response = await fetch(`/api/facturas/${id}/confirmar/`, {
+                    method: 'POST',
+                });
+                const res = await response.json();
+                if (res.ok) {
+                    showToast(`Factura ${folio} confirmada con éxito para remesa.`);
+                    cargarDatosConf();
+                } else {
+                    showToast(`Error al confirmar: ${res.error}`, false);
+                }
+            } catch (err) {
+                console.error("Error al confirmar:", err);
+                showToast("Error de conexión.", false);
+            }
+        };
+
+        // Actions: Revert Approved to Pending (POST to `/api/facturas/{id}/revertir/`)
+        const revertirFactura = async (id, folio) => {
+            try {
+                const response = await fetch(`/api/facturas/${id}/revertir/`, {
+                    method: 'POST',
+                });
+                const res = await response.json();
+                if (res.ok) {
+                    showToast(`Factura ${folio} devuelta al flujo de priorización.`);
+                    cargarDatosConf();
+                } else {
+                    showToast(`Error al revertir: ${res.error}`, false);
+                }
+            } catch (err) {
+                console.error("Error al revertir:", err);
+                showToast("Error de conexión.", false);
+            }
+        };
+
+
+        // --- MODULE 3: CONCILIACIÓN Y EXPORTACIÓN (SCREEN 2 TAB B) ---
+        const cargarDatosConc = async () => {
+            try {
+                tableBodyConc.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Extrayendo lote de remesas confirmadas...</td></tr>`;
+
+                const response = await fetch('/api/confirmados/');
+                if (!response.ok) throw new Error('Respuesta inválida.');
+
+                facturasConc = await response.json();
+                currentConcList = [...facturasConc];
+                renderTableConc();
+            } catch (error) {
+                console.error("Error al cargar confirmados:", error);
+                tableBodyConc.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ No se pudieron extraer las facturas confirmadas.</td></tr>`;
+            }
+        };
+
+        const renderTableConc = () => {
+            tableBodyConc.innerHTML = '';
+            if (currentConcList.length === 0) {
+                emptyState.style.display = 'block';
+                actualizarKPIsConc(0, 0);
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            let totalConfirmado = 0;
+
+            currentConcList.forEach((f) => {
+                totalConfirmado += f.total_abonado;
+                
+                let estadoBadge = `<span class="badge badge-rev">CONFIRMADO</span>`;
+                if (f.estado === 'PAGADO') {
+                    estadoBadge = `<span class="badge badge-ok">PAGADO</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600; font-family: var(--font-mono);">${f.folio}</td>
+                    <td>${f.proveedor}</td>
+                    <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.monto_mxn)}</td>
+                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--accent-dark);">${formatCurrency(f.total_abonado)}</td>
+                    <td style="text-align: center; font-family: var(--font-mono);">${f.moneda}</td>
+                    <td style="text-align: center;">${f.dias_vencidos} días</td>
+                    <td style="text-align: center;">${estadoBadge}</td>
+                `;
+                tableBodyConc.appendChild(tr);
+            });
+
+            actualizarKPIsConc(totalConfirmado, currentConcList.length);
+        };
+
+        const actualizarKPIsConc = (total, count) => {
+            document.getElementById('kpi-conc-total').textContent = formatCurrency(total);
+            document.getElementById('kpi-conc-count').textContent = `${count} facturas en remesa`;
+        };
+
+        // Export Remesa Excel (GET to `/api/exportar-remesa/` returning binary Blob)
+        const descargarRemesaExcel = async () => {
+            try {
+                showToast("Generando reporte de pagos bancarios...");
+                const response = await fetch('/api/exportar-remesa/', {
+                    method: 'GET',
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    try {
+                        const jsonErr = JSON.parse(text);
+                        showToast(`Error de exportación: ${jsonErr.error}`, false);
+                    } catch {
+                        showToast("No hay facturas confirmadas para exportar hoy.", false);
+                    }
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                // Filename matching standard remesa_YYYYMMDD.xlsx
+                const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                a.download = `remesa_${dateStr}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showToast("Layout de Pagos descargado correctamente.");
+            } catch (err) {
+                console.error("Error al exportar remesa:", err);
+                showToast("Fallo de red al solicitar el reporte de remesas.", false);
+            }
+        };
+
+        // Upload Statement File for Reconciliation (POST to `/api/conciliar/`)
+        const ejecutarConciliacion = async (fileInput) => {
+            if (fileInput.files.length === 0) return;
+
+            const file = fileInput.files[0];
+            const textEl = document.getElementById('dropzone-compact-text');
+            const originalText = textEl.textContent;
+
+            textEl.innerHTML = `<span style="color: var(--accent-dark);">🔄 Conciliando lote...</span>`;
+
+            const formData = new FormData();
+            formData.append('archivo', file);
+
+            try {
+                const response = await fetch('/api/conciliar/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const res = await response.json();
+                if (res.ok) {
+                    showToast(res.message);
+                    
+                    // Populate Reconciliation statistics modal
+                    document.getElementById('rec-stat-matched').textContent = res.matched.length;
+                    document.getElementById('rec-stat-notfound').textContent = res.not_found.length;
+                    document.getElementById('rec-stat-already').textContent = res.already_paid.length;
+                    document.getElementById('rec-stat-wrong').textContent = res.wrong_state.length;
+
+                    const listMatched = document.getElementById('rec-list-matched');
+                    listMatched.textContent = res.matched.length > 0 ? res.matched.join(', ') : 'Ninguno';
+
+                    const listNotFound = document.getElementById('rec-list-notfound');
+                    listNotFound.textContent = res.not_found.length > 0 ? res.not_found.join(', ') : 'Ninguno';
+
+                    abrirModalConciliacion();
+
+                    // Reload Conciliacion module list
+                    cargarDatosConc();
+                } else {
+                    showToast(`Error al conciliar: ${res.error}`, false);
+                }
+            } catch (err) {
+                console.error("Error al conciliar:", err);
+                showToast("No se pudo conectar con el servicio de conciliación.", false);
+            } finally {
+                fileInput.value = '';
+                textEl.textContent = originalText;
+            }
+        };
+
+
+        // --- MODAL CARGA (EXCEL BULK IMPORT) ---
+        const abrirModalCarga = () => {
+            excelFileInput.value = '';
+            dropzoneText.style.display = 'block';
+            fileNamePreview.style.display = 'none';
+            document.getElementById('upload-modal-overlay').classList.add('open');
+            document.getElementById('upload-modal').classList.add('open');
+        };
+
+        const cerrarModalCarga = () => {
+            document.getElementById('upload-modal-overlay').classList.remove('open');
+            document.getElementById('upload-modal').classList.remove('open');
+        };
+
+        excelFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                dropzoneText.style.display = 'none';
+                fileNamePreview.textContent = `✓ Seleccionado: ${e.target.files[0].name}`;
+                fileNamePreview.style.display = 'block';
+            }
         });
 
-        searchInput.addEventListener('input', applyFilters);
+        // Submit form for loading invoices Excel
+        document.getElementById('formSubirExcel').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const fileInput = document.getElementById('excelFileInput');
 
-        sortBtn.addEventListener('click', () => {
-            isSortDesc = !isSortDesc;
-            sortBtn.querySelector('span').textContent = isSortDesc ? 'Scoring: Mayor a Menor' : 'Scoring: Menor a Mayor';
-            sortIcon.setAttribute('data-lucide', isSortDesc ? 'arrow-down-narrow-wide' : 'arrow-up-narrow-wide');
-            lucide.createIcons(); // Re-renderiza exclusivamente el icono de ordenamiento cambiado
-            applyFilters();
+            if (fileInput.files.length === 0) return;
+
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = "Importando lote...";
+            submitBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('archivo', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/cargas/excel/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const res = await response.json();
+                if (res.ok) {
+                    showToast(`✅ ${res.message}`);
+                    cerrarModalCarga();
+                    // Reload pending invoices if on Screen 1
+                    cargarDatosPrio();
+                } else {
+                    showToast(`❌ Error: ${res.error}`, false);
+                }
+            } catch (err) {
+                console.error("Error de importación:", err);
+                showToast("No se pudo comunicar con el cargador de facturas.", false);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         });
 
-        closeBladeBtn.addEventListener('click', cerrarBlade);
+
+        // --- RECONCILIATION SUMMARY MODAL ---
+        const abrirModalConciliacion = () => {
+            document.getElementById('conciliacion-modal-overlay').classList.add('open');
+            document.getElementById('conciliacion-modal').classList.add('open');
+        };
+
+        const cerrarModalConciliacion = () => {
+            document.getElementById('conciliacion-modal-overlay').classList.remove('open');
+            document.getElementById('conciliacion-modal').classList.remove('open');
+        };
+
+
+        // --- FILTERS & LISTENERS FOR PRIORITIZATION ---
+        starFilterPrio.addEventListener('change', (e) => {
+            selectedStarPrioFilter = e.target.value;
+            filtrarDatosPrio();
+        });
+
+        searchInputPrio.addEventListener('input', filtrarDatosPrio);
+        searchInputConf.addEventListener('input', filtrarDatosConf);
+
+        sortBtnPrio.addEventListener('click', () => {
+            isSortPrioDesc = !isSortPrioDesc;
+            sortBtnPrio.querySelector('span').textContent = isSortPrioDesc ? 'Scoring: Mayor a Menor' : 'Scoring: Menor a Mayor';
+            sortIconPrio.setAttribute('data-lucide', isSortPrioDesc ? 'arrow-down-narrow-wide' : 'arrow-up-narrow-wide');
+            lucide.createIcons();
+            filtrarDatosPrio();
+        });
+
+        document.getElementById('closeBladeBtn').addEventListener('click', cerrarBlade);
+        document.getElementById('cancelBladeBtn').addEventListener('click', cerrarBlade);
         bladeOverlay.addEventListener('click', cerrarBlade);
 
-        const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('live-date').textContent = new Date().toLocaleDateString('es-MX', opcionesFecha);
+        // Date Display
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('live-date').textContent = new Date(2026, 4, 20).toLocaleDateString('es-MX', dateOptions);
 
-        // Inicialización de datos e íconos generales
+        // Init
         lucide.createIcons();
-        cargarDatosVivos();
+        switchModule('priorizacion');
     </script>
+
 </body>
+
 </html>

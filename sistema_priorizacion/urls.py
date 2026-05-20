@@ -6,7 +6,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('', include('dashboard.urls')),
+    path('', include('facturas.urls')),
 
-    path('cargas/', include('cargas.urls')),
+    # Por esta otra:
+    path('api/facturas/', include('cargas.urls')), 
+
     path('api/', include('api.urls')),
+
 ]

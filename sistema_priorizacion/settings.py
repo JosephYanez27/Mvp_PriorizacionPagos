@@ -114,22 +114,35 @@ WSGI_APPLICATION = 'sistema_priorizacion.wsgi.application'
 # DATABASE
 # ======================================================
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+
+#         'NAME': 'neondb',
+
+#         'USER': 'neondb_owner',
+
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+
+#         'HOST': 'ep-young-field-a8zqsjf8-pooler.eastus2.azure.neon.tech',
+
+#         'PORT': '5432',
+
+#         'OPTIONS': {
+#             'sslmode': 'require'
+#         }
+#     }
+# }
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-
-        'NAME': 'neondb',
-
-        'USER': 'neondb_owner',
-
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-
-        'HOST': 'ep-young-field-a8zqsjf8-pooler.eastus2.azure.neon.tech',
-
-        'PORT': '5432',
-
+        'NAME': 'neondb',                                                 # Extraído de /neondb
+        'USER': 'neondb_owner',                                           # Extraído antes del :
+        'PASSWORD': 'npg_2muH4oKkvpEa',                                   # Tu contraseña real temporal
+        'HOST': 'ep-young-field-a8zqsjf8-pooler.eastus2.azure.neon.tech', # El servidor de Neon
+        'PORT': '5432',                                                   # Puerto estándar de Postgres
         'OPTIONS': {
-            'sslmode': 'require'
+            'sslmode': 'require',                                         # Equivalente a ?sslmode=require
         }
     }
 }

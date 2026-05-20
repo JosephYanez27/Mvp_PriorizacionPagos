@@ -1,11 +1,7 @@
 from django.urls import path
-
-from cargas.views import vista_subida
+from . import views  # Asegúrate de que apunte a donde tienes tu vista 'cargar_excel_api'
 
 urlpatterns = [
-    path(
-        'subir/',
-        vista_subida,
-        name='subir_excel_html'
-    )
+    # Al estar incluido dentro de 'cargas/', la URL final para el navegador será: /cargas/excel/
+    path('excel/', views.cargar_excel_api, name='cargar_excel_api'),
 ]

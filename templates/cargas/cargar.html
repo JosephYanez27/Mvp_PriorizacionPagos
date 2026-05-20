@@ -1,0 +1,39 @@
+<button class="btn btn-primary" onclick="document.getElementById('inputExcelMaestro').click()">
+    📊 Importar Excel Maestro Cuentas por Pagar
+</button>
+
+<input type="file" id="inputExcelMaestro" style="display:none;" accept=".xlsx, .xls" onchange="subirExcelMaestro(this)">
+
+async function subirExcelMaestro(input) {
+    if (input.files.length === 0) return;
+    
+    // Creamos el contenedor de datos para el archivo
+    const formData = new FormData();
+    formData.append('archivo_excel', input.files[0]);
+
+    // Opcional: Mostrar un mensaje de "Cargando..."
+    mostrarToast("🔄 Procesando y mapeando folios en Neon PostgreSQL... por favor espera.");
+
+    try {
+        const response = await fetch('/api/facturas/cargar-excel/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const res = await response.json();
+        
+        if (res.success) {
+            alert(`✅ ${res.message}`);
+            // Limpiamos el input para permitir volver a cargar en el futuro
+            input.value = '';
+            // Recargamos el listado del dashboard para ver los folios actualizados
+            if (typeof cargarDatosDesdeServidor === "function") {
+                cargarDatosDesdeServidor();
+            }
+        } else {
+            alert(`❌ Error: ${res.message}`);
+        }
+    } catch (e) {
+        alert("❌ Error de conexión al intentar subir el archivo.");
+    }
+}
