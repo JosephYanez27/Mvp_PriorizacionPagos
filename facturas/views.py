@@ -9,7 +9,7 @@ from datetime import date
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-
+from decimal import Decimal, InvalidOperation
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -107,18 +107,26 @@ def api_autorizar(request, id_factura: int):
     except json.JSONDecodeError:
         return _json_error("JSON inválido en el cuerpo de la solicitud.")
 
-    notas  = body.get("notas_auditoria", "")
-    abono  = float(body.get("abono", 0) or 0)
+    notas = body.get("notas_auditoria", "")
+
+    # 2. CORRECCIÓN: Convertir el valor del frontend a Decimal de forma segura pasando por string
+    try:
+        abono = Decimal(str(body.get("abono", 0) or 0))
+    except (InvalidOperation, TypeError, ValueError):
+        return _json_error("El monto del abono no tiene un formato numérico válido.")
 
     if abono < 0:
         return _json_error("El abono no puede ser negativo.")
-    if abono > float(factura.saldo_neto):
+
+    # 3. CORRECCIÓN: Quitamos float() y comparamos Decimal contra Decimal nativo
+    if abono > factura.saldo_neto:
         return _json_error("El abono no puede superar el saldo neto disponible.")
 
     with transaction.atomic():
         factura.notas_auditoria = notas
-        factura.total_abonado   = factura.total_abonado + abono
-        factura.estado          = "APROBADO"
+        # 4. CORRECCIÓN: Al ser ambos de tipo Decimal, la suma se ejecuta de forma perfecta
+        factura.total_abonado = factura.total_abonado + abono
+        factura.estado = "APROBADO"
         factura.save()
 
     return _json_ok(_serialize_factura(factura), message="Factura autorizada correctamente.")
@@ -227,11 +235,11 @@ def api_exportar_remesa(request):
     ws.title = "Remesa de Pago"
 
     # Styles
-    header_font  = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
-    header_fill  = PatternFill("solid", fgColor="1A1A2E")
+    header_font = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill("solid", fgColor="1A1A2E")
     center_align = Alignment(horizontal="center", vertical="center")
     money_format = '#,##0.00'
-    thin_border  = Border(
+    thin_border = Border(
         left=Side(style="thin", color="E5E7EB"),
         right=Side(style="thin", color="E5E7EB"),
         top=Side(style="thin", color="E5E7EB"),
@@ -256,10 +264,10 @@ def api_exportar_remesa(request):
     # Header row
     for col_idx, (header, width) in enumerate(columns, 1):
         cell = ws.cell(row=1, column=col_idx, value=header)
-        cell.font      = header_font
-        cell.fill      = header_fill
+        cell.font = header_font
+        cell.fill = header_fill
         cell.alignment = center_align
-        cell.border    = thin_border
+        cell.border = thin_border
         ws.column_dimensions[get_column_letter(col_idx)].width = width
 
     ws.row_dimensions[1].height = 22
@@ -284,12 +292,12 @@ def api_exportar_remesa(request):
             f.fecha_factura.isoformat() if f.fecha_factura else "",
         ]
         for col_idx, value in enumerate(row_data, 1):
-            cell        = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
             cell.border = thin_border
-            cell.fill   = fill
+            cell.fill = fill
             if col_idx in (5, 7, 8, 9):   # money columns
                 cell.number_format = money_format
-                cell.alignment     = Alignment(horizontal="right")
+                cell.alignment = Alignment(horizontal="right")
             elif col_idx in (6, 10):       # numeric
                 cell.alignment = Alignment(horizontal="center")
 
@@ -379,10 +387,10 @@ def api_conciliar(request):
         return _json_error("El archivo no contiene folios en las filas de datos.")
 
     # Process matches
-    matched      = []
-    not_found    = []
+    matched = []
+    not_found = []
     already_paid = []
-    wrong_state  = []
+    wrong_state = []
 
     with transaction.atomic():
         for folio in folios_in_file:
@@ -395,7 +403,8 @@ def api_conciliar(request):
                     factura.save()
                     matched.append(folio)
                 else:
-                    wrong_state.append({"folio": folio, "estado": factura.estado})
+                    wrong_state.append(
+                        {"folio": folio, "estado": factura.estado})
             except Factura.DoesNotExist:
                 not_found.append(folio)
 
@@ -464,18 +473,21 @@ def api_cargar_excel(request):
         return _json_error("El archivo debe contener al menos las columnas 'Folio' y 'Proveedor'.")
 
     created = []
-    errors  = []
+    errors = []
 
     with transaction.atomic():
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), 2):
             try:
-                folio = str(row[FIELD_MAP["folio"]]).strip() if row[FIELD_MAP["folio"]] else None
+                folio = str(row[FIELD_MAP["folio"]]).strip(
+                ) if row[FIELD_MAP["folio"]] else None
                 if not folio:
                     continue  # skip empty rows
 
-                nombre_prov = str(row[FIELD_MAP["proveedor"]]).strip() if row[FIELD_MAP["proveedor"]] else "Sin nombre"
-                estrellas   = float(row[FIELD_MAP["estrellas"]]) if FIELD_MAP["estrellas"] is not None and row[FIELD_MAP["estrellas"]] else 3.0
-                estrellas   = max(1.0, min(5.0, estrellas))
+                nombre_prov = str(row[FIELD_MAP["proveedor"]]).strip(
+                ) if row[FIELD_MAP["proveedor"]] else "Sin nombre"
+                estrellas = float(
+                    row[FIELD_MAP["estrellas"]]) if FIELD_MAP["estrellas"] is not None and row[FIELD_MAP["estrellas"]] else 3.0
+                estrellas = max(1.0, min(5.0, estrellas))
 
                 proveedor, _ = Proveedor.objects.get_or_create(
                     nombre=nombre_prov,
@@ -483,23 +495,30 @@ def api_cargar_excel(request):
                 )
 
                 # Determine dates
-                fecha_val = row[FIELD_MAP["fecha"]] if FIELD_MAP["fecha"] is not None else None
+                fecha_val = row[FIELD_MAP["fecha"]
+                                ] if FIELD_MAP["fecha"] is not None else None
                 if hasattr(fecha_val, "date"):
                     fecha_val = fecha_val.date()
                 elif isinstance(fecha_val, str):
                     from datetime import datetime
                     try:
-                        fecha_val = datetime.strptime(fecha_val, "%Y-%m-%d").date()
+                        fecha_val = datetime.strptime(
+                            fecha_val, "%Y-%m-%d").date()
                     except ValueError:
                         fecha_val = None
 
-                monto_orig  = float(row[FIELD_MAP["monto_orig"]])  if FIELD_MAP["monto_orig"]  is not None and row[FIELD_MAP["monto_orig"]]  else 0.0
-                tipo_cambio = float(row[FIELD_MAP["tipo_cambio"]]) if FIELD_MAP["tipo_cambio"] is not None and row[FIELD_MAP["tipo_cambio"]] else 1.0
-                total_val   = float(row[FIELD_MAP["total"]])       if FIELD_MAP["total"]       is not None and row[FIELD_MAP["total"]]       else monto_orig * tipo_cambio
-                tipo_pago   = str(row[FIELD_MAP["tipo_pago"]]).upper() if FIELD_MAP["tipo_pago"] is not None and row[FIELD_MAP["tipo_pago"]] else "CONTADO"
+                monto_orig = float(
+                    row[FIELD_MAP["monto_orig"]]) if FIELD_MAP["monto_orig"] is not None and row[FIELD_MAP["monto_orig"]] else 0.0
+                tipo_cambio = float(
+                    row[FIELD_MAP["tipo_cambio"]]) if FIELD_MAP["tipo_cambio"] is not None and row[FIELD_MAP["tipo_cambio"]] else 1.0
+                total_val = float(
+                    row[FIELD_MAP["total"]]) if FIELD_MAP["total"] is not None and row[FIELD_MAP["total"]] else monto_orig * tipo_cambio
+                tipo_pago = str(row[FIELD_MAP["tipo_pago"]]).upper(
+                ) if FIELD_MAP["tipo_pago"] is not None and row[FIELD_MAP["tipo_pago"]] else "CONTADO"
                 if tipo_pago not in ("CONTADO", "CREDITO"):
                     tipo_pago = "CONTADO"
-                moneda      = str(row[FIELD_MAP["moneda"]]).upper() if FIELD_MAP["moneda"] is not None and row[FIELD_MAP["moneda"]] else "MXN"
+                moneda = str(row[FIELD_MAP["moneda"]]).upper(
+                ) if FIELD_MAP["moneda"] is not None and row[FIELD_MAP["moneda"]] else "MXN"
 
                 Factura.objects.update_or_create(
                     folio=folio,
