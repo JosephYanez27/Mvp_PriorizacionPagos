@@ -55,6 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
 
@@ -175,17 +176,22 @@ USE_TZ = True
 # STATIC
 # ======================================================
 
-from pathlib import Path
+STATIC_URL = '/static/'
 
-# Asegúrate de que BASE_DIR esté definido arriba en tu archivo
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-STATIC_URL = 'static/'
-
-# Añade esta configuración para indicarle a Django la ruta de la carpeta static raíz
+# Dónde busca Django los estilos en desarrollo local
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# CORRECCIÓN: Carpeta unificada donde WhiteNoise guardará y servirá los estilos en producción (Render)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# CORRECCIÓN: Motor de optimización para comprimir y cachear CSS/JS en producción
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 # ======================================================
 # MEDIA
 # ======================================================
