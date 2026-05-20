@@ -20,9 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-dev-key'
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.onrender.com']
 
 
 # ======================================================
@@ -138,7 +141,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'neondb',                                                 # Extraído de /neondb
         'USER': 'neondb_owner',                                           # Extraído antes del :
-        'PASSWORD': 'npg_2muH4oKkvpEa',                                   # Tu contraseña real temporal
+        'PASSWORD': os.getenv('DB_PASSWORD', 'npg_2muH4oKkvpEa'),                                 # Tu contraseña real temporal
         'HOST': 'ep-young-field-a8zqsjf8-pooler.eastus2.azure.neon.tech', # El servidor de Neon
         'PORT': '5432',                                                   # Puerto estándar de Postgres
         'OPTIONS': {
