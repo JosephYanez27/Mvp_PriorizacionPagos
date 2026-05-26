@@ -10,6 +10,7 @@ from . import views
 urlpatterns = [
     # Screen 1 — Prioritization
     path("api/pagos/",                              views.api_pendientes,          name="api_pendientes"),
+    path('api/pagos/por-proveedor/', views.api_pendientes_por_proveedor),
     path("api/facturas/<int:id_factura>/autorizar/", views.api_autorizar,           name="api_autorizar"),
     path("api/facturas/<int:id_factura>/revertir/",  views.api_revertir_a_pendiente, name="api_revertir"),
 

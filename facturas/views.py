@@ -87,6 +87,57 @@ def api_pendientes(request):
     return JsonResponse(data, safe=False)
 
 
+@require_http_methods(["GET"])
+def api_pendientes_por_proveedor(request):
+    """
+    GET /api/pagos/por-proveedor/
+    Retorna las facturas PENDIENTES agrupadas por proveedor, incluyendo la 
+    suma total de sus montos, saldos netos y la lista de folios asociados.
+    """
+    # 1. Traemos todas las facturas pendientes con su proveedor optimizado
+    facturas = (
+        Factura.objects
+        .filter(estado="PENDIENTE")
+        .select_related("proveedor")
+        .order_by("proveedor__nombre", "folio")
+    )
+
+    # 2. Agrupamos en un diccionario usando el ID del proveedor como llave
+    proveedores_dict = {}
+
+    for f in facturas:
+        prov_id = f.proveedor.id_proveedor
+
+        if prov_id not in proveedores_dict:
+            proveedores_dict[prov_id] = {
+                "proveedor_id": prov_id,
+                "proveedor": f.proveedor.nombre,
+                "estrellas": float(f.proveedor.prioridad_estrellas),
+                "total_facturas": 0,
+                "suma_monto_original": 0.0,
+                "suma_total_mxn": 0.0,
+                "suma_saldo_neto": 0.0,
+                "folios": []
+            }
+
+        # 3. Acumulamos los valores de las facturas folidas
+        grupo = proveedores_dict[prov_id]
+        grupo["total_facturas"] += 1
+        grupo["suma_monto_original"] += float(f.monto_original)
+        grupo["suma_total_mxn"] += float(f.total)
+        grupo["suma_saldo_neto"] += float(f.saldo_neto)
+        grupo["folios"].append(f.folio)
+
+    # 4. Convertimos el diccionario a una lista y ordenamos por saldo pendiente de mayor a menor
+    data = sorted(
+        proveedores_dict.values(),
+        key=lambda x: x["suma_saldo_neto"],
+        reverse=True
+    )
+
+    return JsonResponse(data, safe=False)
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_autorizar(request, id_factura: int):

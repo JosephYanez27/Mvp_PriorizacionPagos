@@ -8,7 +8,9 @@
     <title>Tesorería Inteligente - Priorización de Pagos</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
 
     <style>
@@ -31,6 +33,7 @@
             min-width: 170px;
             transition: border-color 0.15s;
         }
+
         .filter-select:focus {
             border-color: var(--accent);
         }
@@ -255,23 +258,27 @@
             gap: 10px;
             margin-bottom: 16px;
         }
+
         .summary-stat-item {
             padding: 10px 12px;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border);
             background: var(--bg-panel);
         }
+
         .summary-stat-label {
             font-size: 10px;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
         }
+
         .summary-stat-value {
             font-size: 16px;
             font-weight: 700;
             margin-top: 2px;
         }
+
         .summary-list-container {
             max-height: 150px;
             overflow-y: auto;
@@ -282,6 +289,7 @@
             font-family: var(--font-mono);
             font-size: 11.5px;
         }
+
         .summary-list-title {
             font-size: 11px;
             font-weight: 600;
@@ -318,6 +326,7 @@
             justify-content: center;
             gap: 12px;
         }
+
         .dropzone-compact:hover {
             border-color: var(--accent);
             background: var(--accent-light);
@@ -341,6 +350,7 @@
             padding: 16px;
             margin-top: 6px;
         }
+
         .blade-input-label {
             font-size: 11px;
             font-weight: 700;
@@ -348,6 +358,7 @@
             color: var(--text-muted);
             margin-bottom: 6px;
         }
+
         .blade-amount-input {
             width: 100%;
             padding: 10px 12px;
@@ -359,9 +370,11 @@
             outline: none;
             transition: border-color 0.15s;
         }
+
         .blade-amount-input:focus {
             border-color: var(--accent);
         }
+
         .error-message {
             color: var(--danger);
             font-size: 11px;
@@ -439,21 +452,15 @@
                     <section class="kpi-grid">
                         <div class="kpi-card">
                             <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
-                            <p class="kpi-label">Total en Fila (Pendiente)</p>
+                            <p class="kpi-label">Deuda Total en Fila</p>
                             <p class="kpi-value accent" id="kpi-prio-total">$0.00</p>
                             <p class="kpi-sub" id="kpi-prio-count">0 facturas en cola</p>
                         </div>
-                        <div class="kpi-card danger">
-                            <div class="kpi-card-icon"><i data-lucide="shield-alert"></i></div>
-                            <p class="kpi-label">Cuentas en Riesgo Crítico</p>
-                            <p class="kpi-value danger" id="kpi-prio-criticos">0</p>
-                            <p class="kpi-sub">Scoring superior al 75%</p>
-                        </div>
                         <div class="kpi-card warning">
-                            <div class="kpi-card-icon"><i data-lucide="clock"></i></div>
-                            <p class="kpi-label">Máximo Retraso Detectado</p>
-                            <p class="kpi-value warning" id="kpi-prio-max-retraso">0 días</p>
-                            <p class="kpi-sub">Retraso de la factura más vieja</p>
+                            <div class="kpi-card-icon"><i data-lucide="users"></i></div>
+                            <p class="kpi-label">Proveedores Pendientes</p>
+                            <p class="kpi-value warning" id="kpi-prio-criticos">0</p>
+                            <p class="kpi-sub">Cuentas por liquidar</p>
                         </div>
                         <div class="kpi-card success">
                             <div class="kpi-card-icon"><i data-lucide="star"></i></div>
@@ -465,8 +472,8 @@
 
                     <section class="section-header">
                         <div>
-                            <h2 class="section-title">Cola de Priorización de Pagos</h2>
-                            <p class="section-subtitle">Visualiza y audita facturas pendientes priorizadas algorítmicamente por el motor de riesgo.</p>
+                            <h2 class="section-title">Cuentas por Pagar (Agrupado)</h2>
+                            <p class="section-subtitle">Visualiza la deuda total pendiente agrupada por proveedor.</p>
                         </div>
                     </section>
 
@@ -487,13 +494,16 @@
                             <option value="1">★ 1 Estrella</option>
                         </select>
 
-                        <button id="sortBtnPrio" class="nav-btn primary" style="margin-left: auto; padding: 8px 14px; font-size: 12.5px;">
-                            <span>Scoring: Mayor a Menor</span>
-                            <i data-lucide="arrow-down-narrow-wide" id="sort-icon-prio" style="width: 14px; height: 14px;"></i>
+                        <button id="sortBtnPrio" class="nav-btn primary"
+                            style="margin-left: auto; padding: 8px 14px; font-size: 12.5px;">
+                            <span>Deuda: Mayor a Menor</span>
+                            <i data-lucide="arrow-down-narrow-wide" id="sort-icon-prio"
+                                style="width: 14px; height: 14px;"></i>
                         </button>
 
                         <button id="openUploadBtn" class="nav-btn secondary-outline" onclick="abrirModalCarga()">
-                            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: var(--accent);"></i>
+                            <i data-lucide="file-spreadsheet"
+                                style="width: 14px; height: 14px; color: var(--accent);"></i>
                             <span>Importar Facturas</span>
                         </button>
                     </div>
@@ -502,18 +512,17 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 70px; text-align: center;">Scoring</th>
-                                    <th>Folio</th>
+                                    <th style="width: 80px; text-align: center;">Facturas</th>
+                                    <th style="width: 200px;">Folios</th>
                                     <th>Proveedor</th>
                                     <th style="text-align: center;">Prioridad</th>
-                                    <th style="text-align: center;">Vencimiento</th>
-                                    <th style="text-align: center;">Moneda</th>
-                                    <th style="text-align: right;">Total Original</th>
-                                    <th style="text-align: right;">Saldo Neto (MXN)</th>
+                                    <th style="text-align: right;">Suma Original</th>
+                                    <th style="text-align: right;">Deuda Total (MXN)</th>
                                     <th style="text-align: center;">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody id="tableBodyPrio"></tbody>
+                            <tbody id="tableBodyPrio">
+                                </tbody>
                         </table>
                     </div>
                 </div>
@@ -538,7 +547,8 @@
                     <section class="section-header">
                         <div>
                             <h2 class="section-title">Bandeja de Confirmación de Pagos</h2>
-                            <p class="section-subtitle">Realiza la segunda validación de las facturas pre-aprobadas antes de enviarlas al lote de exportación bancaria.</p>
+                            <p class="section-subtitle">Realiza la segunda validación de las facturas pre-aprobadas
+                                antes de enviarlas al lote de exportación bancaria.</p>
                         </div>
                     </section>
 
@@ -589,13 +599,15 @@
                     <section class="section-header">
                         <div>
                             <h2 class="section-title">Layout de Pagos y Conciliación Bancaria</h2>
-                            <p class="section-subtitle">Genera el reporte de pagos autorizado para el banco y concilia los estados de cuenta devueltos.</p>
+                            <p class="section-subtitle">Genera el reporte de pagos autorizado para el banco y concilia
+                                los estados de cuenta devueltos.</p>
                         </div>
                     </section>
 
                     <div class="conciliacion-controls">
                         <div>
-                            <button class="nav-btn primary" onclick="descargarRemesaExcel()" style="padding: 12px 24px; font-size: 13.5px; font-weight: 600;">
+                            <button class="nav-btn primary" onclick="descargarRemesaExcel()"
+                                style="padding: 12px 24px; font-size: 13.5px; font-weight: 600;">
                                 <i data-lucide="download" style="width: 18px; height: 18px;"></i>
                                 <span>Descargar Layout de Pagos Bancarios</span>
                             </button>
@@ -607,10 +619,13 @@
 
                         <form id="formConciliacion" enctype="multipart/form-data">
                             {% csrf_token %}
-                            <div class="dropzone-compact" onclick="document.getElementById('conciliacionFileInput').click()">
-                                <i data-lucide="upload-cloud" style="width: 22px; height: 22px; color: var(--accent);"></i>
+                            <div class="dropzone-compact"
+                                onclick="document.getElementById('conciliacionFileInput').click()">
+                                <i data-lucide="upload-cloud"
+                                    style="width: 22px; height: 22px; color: var(--accent);"></i>
                                 <span id="dropzone-compact-text">Subir Retorno del Banco (.xlsx)</span>
-                                <input type="file" id="conciliacionFileInput" accept=".xlsx, .xls" style="display: none;" onchange="ejecutarConciliacion(this)">
+                                <input type="file" id="conciliacionFileInput" accept=".xlsx, .xls"
+                                    style="display: none;" onchange="ejecutarConciliacion(this)">
                             </div>
                         </form>
                     </div>
@@ -634,8 +649,10 @@
                 </div>
 
                 <!-- EMPTY STATE -->
-                <div id="emptyState" style="display: none; padding: 48px; text-align: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-top: 16px;">
-                    <p style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Ningún registro coincide con los criterios en este módulo.</p>
+                <div id="emptyState"
+                    style="display: none; padding: 48px; text-align: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-top: 16px;">
+                    <p style="font-size: 14px; color: var(--text-muted); font-weight: 500;">Ningún registro coincide con
+                        los criterios en este módulo.</p>
                 </div>
 
             </div>
@@ -697,7 +714,8 @@
                 <span class="error-message" id="abono-error-msg">El abono excede el saldo de la factura.</span>
 
                 <p class="blade-input-label" style="margin-top: 14px;">Notas de Auditoría (Opcional)</p>
-                <textarea id="notasAuditoriaInput" class="justificacion-input" placeholder="Escribe notas de tesorería y motivos de dispersión..."></textarea>
+                <textarea id="notasAuditoriaInput" class="justificacion-input"
+                    placeholder="Escribe notas de tesorería y motivos de dispersión..."></textarea>
             </div>
         </div>
 
@@ -720,7 +738,8 @@
         <form method="POST" enctype="multipart/form-data" class="modal-body" id="formSubirExcel">
             {% csrf_token %}
             <div class="file-dropzone" onclick="document.getElementById('excelFileInput').click()">
-                <i data-lucide="upload-cloud" style="width: 36px; height: 36px; color: var(--text-muted); opacity: 0.8;"></i>
+                <i data-lucide="upload-cloud"
+                    style="width: 36px; height: 36px; color: var(--text-muted); opacity: 0.8;"></i>
                 <p id="dropzone-text">Haz clic aquí para seleccionar tu archivo Excel (.xlsx, .xls)</p>
                 <span id="file-name-preview" class="file-name-preview"></span>
                 <input type="file" name="archivo" id="excelFileInput" accept=".xlsx, .xls" required>
@@ -833,7 +852,7 @@
         // Switching Active Module Dashboard
         const switchModule = (moduleName) => {
             activeModule = moduleName;
-            
+
             // Remove active classes
             menuPrio.classList.remove('active');
             menuConf.classList.remove('active');
@@ -899,33 +918,36 @@
             `;
         };
 
-        // --- MODULE 1: PRIORITIZATION PAGOS ---
+        // --- MODULE 1: PRIORITIZATION PAGOS (AGRUPADO POR PROVEEDOR) ---
         const cargarDatosPrio = async () => {
             try {
-                tableBodyPrio.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Conectando con el scoring de facturas pendientes...</td></tr>`;
-                
-                const response = await fetch('/api/pagos/');
+                tableBodyPrio.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted); font-weight: 500;">Conectando con cuentas por pagar...</td></tr>`;
+
+                const response = await fetch('/api/pagos/por-proveedor/');
                 if (!response.ok) throw new Error('Respuesta de red inválida.');
 
                 facturasPrio = await response.json();
                 filtrarDatosPrio();
             } catch (error) {
                 console.error("Error al cargar prioritarios:", error);
-                tableBodyPrio.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ Fallo de Sincronización: No se pudieron extraer las facturas pendientes.</td></tr>`;
+                tableBodyPrio.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 32px; color: var(--danger); font-weight: 600;">✕ Fallo de Sincronización: No se pudieron extraer las cuentas pendientes.</td></tr>`;
             }
         };
 
         const filtrarDatosPrio = () => {
             const search = searchInputPrio.value.toLowerCase().trim();
-            
+
             currentPrioList = facturasPrio.filter(f => {
-                const matchesSearch = f.proveedor.toLowerCase().includes(search) || f.folio.toLowerCase().includes(search);
+                // Busca coincidencias en el nombre del proveedor o en CUALQUIERA de sus folios
+                const matchesSearch = f.proveedor.toLowerCase().includes(search) ||
+                    f.folios.some(folio => folio.toLowerCase().includes(search));
                 const matchesStars = selectedStarPrioFilter === 'all' || Math.floor(f.estrellas).toString() === selectedStarPrioFilter;
                 return matchesSearch && matchesStars;
             });
 
+            // Ordenamos por la deuda total (mayor a menor por defecto)
             currentPrioList.sort((a, b) => {
-                return isSortPrioDesc ? (b.scoring - a.scoring) : (a.scoring - b.scoring);
+                return isSortPrioDesc ? (b.suma_saldo_neto - a.suma_saldo_neto) : (a.suma_saldo_neto - b.suma_saldo_neto);
             });
 
             renderTablePrio();
@@ -941,49 +963,45 @@
             emptyState.style.display = 'none';
 
             let totalSaldoNeto = 0;
-            let cuentasCriticas = 0;
-            let maxRetraso = 0;
+            let totalFacturasGlobal = 0;
             let sumaEstrellas = 0;
 
             currentPrioList.forEach((f, idx) => {
-                totalSaldoNeto += f.saldo_neto;
-                if (f.scoring >= 75) cuentasCriticas++;
-                if (f.dias_vencidos > maxRetraso) maxRetraso = f.dias_vencidos;
+                totalSaldoNeto += f.suma_saldo_neto;
+                totalFacturasGlobal += f.total_facturas;
                 sumaEstrellas += f.estrellas;
 
-                let urgencyClass = 'urgency-baja';
-                if (f.dias_vencidos >= 90) urgencyClass = 'urgency-paro';
-                else if (f.dias_vencidos >= 60) urgencyClass = 'urgency-alta';
-                else if (f.dias_vencidos >= 30) urgencyClass = 'urgency-media';
+                // Formateo visual para no saturar la tabla si un proveedor tiene muchos folios
+                const foliosDisplay = f.folios.length > 2
+                    ? `${f.folios[0]}, ${f.folios[1]} <span style="color:var(--text-muted); font-size:11px;">+${f.folios.length - 2}</span>`
+                    : f.folios.join(', ');
 
                 const tr = document.createElement('tr');
                 tr.style.cursor = 'pointer';
                 tr.innerHTML = `
-                    <td style="width: 100px;">${buildScoreCell(f.scoring)}</td>
-                    <td style="font-weight: 600; color: var(--text-primary); font-family: var(--font-mono);">${f.folio}</td>
-                    <td style="font-weight: 500;">${f.proveedor}</td>
-                    <td style="text-align: center;">${buildStarsHtml(f.estrellas)}</td>
-                    <td style="text-align: center;"><span class="${urgencyClass}">${f.dias_vencidos} días</span></td>
-                    <td style="text-align: center; font-family: var(--font-mono); font-size: 12px;">${f.moneda}</td>
-                    <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.monto_original)}</td>
-                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">${formatCurrency(f.saldo_neto)}</td>
-                    <td style="text-align: center;">
-                        <button class="review-btn" onclick="abrirDetalleBlade(${idx}); event.stopPropagation();">Auditar</button>
-                    </td>
-                `;
+            <td style="text-align: center; font-weight: 600;">${f.total_facturas}</td>
+            <td style="font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); font-size: 13px;">${foliosDisplay}</td>
+            <td style="font-weight: 500;">${f.proveedor}</td>
+            <td style="text-align: center;">${buildStarsHtml(f.estrellas)}</td>
+            <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.suma_monto_original)}</td>
+            <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">${formatCurrency(f.suma_saldo_neto)}</td>
+            <td style="text-align: center;">
+                <button class="review-btn" onclick="abrirDetalleBlade(${idx}); event.stopPropagation();">Auditar</button>
+            </td>
+        `;
                 tr.addEventListener('click', () => abrirDetalleBlade(idx));
                 tableBodyPrio.appendChild(tr);
             });
 
             const avgEstrellas = (sumaEstrellas / currentPrioList.length).toFixed(1);
-            actualizarKPIsPrio(totalSaldoNeto, cuentasCriticas, maxRetraso, avgEstrellas);
+            // Adaptamos los KPIs a la nueva realidad agrupada
+            actualizarKPIsPrio(totalSaldoNeto, currentPrioList.length, totalFacturasGlobal, avgEstrellas);
         };
 
-        const actualizarKPIsPrio = (total, criticas, maxDias, promEstrellas) => {
+        const actualizarKPIsPrio = (total, proveedoresCount, facturasCount, promEstrellas) => {
             document.getElementById('kpi-prio-total').textContent = formatCurrency(total);
-            document.getElementById('kpi-prio-count').textContent = `${currentPrioList.length} facturas en fila`;
-            document.getElementById('kpi-prio-criticos').textContent = criticas;
-            document.getElementById('kpi-prio-max-retraso').textContent = `${maxDias} días`;
+            document.getElementById('kpi-prio-count').textContent = `${facturasCount} facturas en cola`;
+            document.getElementById('kpi-prio-criticos').textContent = proveedoresCount; // Ahora muestra Proveedores en fila
             document.getElementById('kpi-prio-avg-estrellas').textContent = isNaN(promEstrellas) ? '0.0' : promEstrellas;
         };
 
@@ -1238,7 +1256,7 @@
 
             currentConcList.forEach((f) => {
                 totalConfirmado += f.total_abonado;
-                
+
                 let estadoBadge = `<span class="badge badge-rev">CONFIRMADO</span>`;
                 if (f.estado === 'PAGADO') {
                     estadoBadge = `<span class="badge badge-ok">PAGADO</span>`;
@@ -1290,7 +1308,7 @@
                 a.style.display = 'none';
                 a.href = url;
                 // Filename matching standard remesa_YYYYMMDD.xlsx
-                const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
                 a.download = `remesa_${dateStr}.xlsx`;
                 document.body.appendChild(a);
                 a.click();
@@ -1324,7 +1342,7 @@
                 const res = await response.json();
                 if (res.ok) {
                     showToast(res.message);
-                    
+
                     // Populate Reconciliation statistics modal
                     document.getElementById('rec-stat-matched').textContent = res.matched.length;
                     document.getElementById('rec-stat-notfound').textContent = res.not_found.length;
@@ -1377,7 +1395,7 @@
         });
 
         // Submit form for loading invoices Excel
-        document.getElementById('formSubirExcel').addEventListener('submit', async function(e) {
+        document.getElementById('formSubirExcel').addEventListener('submit', async function (e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             const fileInput = document.getElementById('excelFileInput');
