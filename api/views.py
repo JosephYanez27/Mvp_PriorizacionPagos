@@ -1,23 +1,27 @@
-from sys import path
-
-from django.shortcuts import render
-
-# Create your views here.
+import json
 import os
 import tempfile
 
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+
+from auditoria.services import (
+    autorizar_facturas_multiple,
+    obtener_facturas_proveedor
+)
 
 from cargas.services.excel_parser import leer_excel
 from cargas.services.save_service import guardar_facturas
+
+
 def pantalla_upload(request):
 
-
-    path(
-        'cargas/excel/',
-        subir_excel
+    return render(
+        request,
+        'upload.html'
     )
+
 
 @csrf_exempt
 def subir_excel(request):
@@ -35,10 +39,6 @@ def subir_excel(request):
         return JsonResponse({
             'error': 'No se recibió archivo'
         }, status=400)
-
-    # -----------------------------------------
-    # GUARDAR TEMPORAL
-    # -----------------------------------------
 
     temp = tempfile.NamedTemporaryFile(
         delete=False,
@@ -59,8 +59,8 @@ def subir_excel(request):
         return JsonResponse({
 
             'success': True,
-
             'facturas_guardadas': total
+
         })
 
     except Exception as e:
@@ -68,7 +68,6 @@ def subir_excel(request):
         return JsonResponse({
 
             'success': False,
-
             'error': str(e)
 
         }, status=500)
@@ -76,3 +75,52 @@ def subir_excel(request):
     finally:
 
         os.unlink(temp.name)
+
+
+def facturas_proveedor(request, proveedor_id):
+
+    try:
+
+        data = obtener_facturas_proveedor(
+            proveedor_id
+        )
+
+        return JsonResponse(
+            data,
+            safe=False
+        )
+
+    except Exception as e:
+
+        return JsonResponse({
+            "ok": False,
+            "error": str(e)
+        }, status=500)
+
+
+@csrf_exempt
+def autorizar_multiple(request):
+
+    try:
+
+        body = json.loads(request.body)
+
+        facturas = body.get(
+            'facturas',
+            []
+        )
+
+        autorizar_facturas_multiple(
+            facturas
+        )
+
+        return JsonResponse({
+            "ok": True
+        })
+
+    except Exception as e:
+
+        return JsonResponse({
+            "ok": False,
+            "error": str(e)
+        }, status=500)

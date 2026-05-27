@@ -25,3 +25,5 @@ def vista_dashboard_pagos(request):
             "estatus": "error",
             "mensaje": str(e)
         }, status=500)
+        
+        

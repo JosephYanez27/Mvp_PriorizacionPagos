@@ -411,6 +411,10 @@
                     <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
                     <span>Conciliación y Exportación</span>
                 </div>
+                <div class="nav-item" id="menu-auditoria" onclick="switchModule('auditoria')">
+                    <i data-lucide="clipboard-list" style="width: 18px; height: 18px;"></i>
+                    <span>Auditoría Proveedor</span>
+                </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -647,6 +651,96 @@
                         </table>
                     </div>
                 </div>
+                <!-- 4. SECCIÓN: AUDITORÍA -->
+<div id="view-auditoria" class="view-section" style="display:none;">
+
+    <section class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+
+        <div class="kpi-card info">
+            <div class="kpi-card-icon">
+                <i data-lucide="shield-check"></i>
+            </div>
+
+            <p class="kpi-label">Auditorías Totales</p>
+
+            <p class="kpi-value accent" id="kpi-aud-total">
+                0
+            </p>
+
+            <p class="kpi-sub">
+                Revisiones registradas
+            </p>
+        </div>
+
+        <div class="kpi-card success">
+            <div class="kpi-card-icon">
+                <i data-lucide="check-check"></i>
+            </div>
+
+            <p class="kpi-label">Pagos Autorizados</p>
+
+            <p class="kpi-value success" id="kpi-aud-ok">
+                0
+            </p>
+
+            <p class="kpi-sub">
+                Confirmados correctamente
+            </p>
+        </div>
+
+        <div class="kpi-card warning">
+            <div class="kpi-card-icon">
+                <i data-lucide="alert-triangle"></i>
+            </div>
+
+            <p class="kpi-label">Movimientos Críticos</p>
+
+            <p class="kpi-value warning" id="kpi-aud-risk">
+                0
+            </p>
+
+            <p class="kpi-sub">
+                Riesgo detectado
+            </p>
+        </div>
+
+    </section>
+
+    <section class="section-header">
+        <div>
+            <h2 class="section-title">
+                Historial de Auditoría
+            </h2>
+
+            <p class="section-subtitle">
+                Registro completo de movimientos operativos y autorizaciones.
+            </p>
+        </div>
+    </section>
+
+    <div class="table-wrap">
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Proveedor</th>
+                    <th>Factura</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Abono</th>
+                    <th>Notas</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBodyAuditoria">
+
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
 
                 <!-- EMPTY STATE -->
                 <div id="emptyState"
@@ -820,6 +914,9 @@
         const tableBodyPrio = document.getElementById('tableBodyPrio');
         const tableBodyConf = document.getElementById('tableBodyConf');
         const tableBodyConc = document.getElementById('tableBodyConc');
+        const viewAud = document.getElementById('view-auditoria');
+const menuAud = document.getElementById('menu-auditoria');
+const tableBodyAuditoria = document.getElementById('tableBodyAuditoria');
 
         const emptyState = document.getElementById('emptyState');
 
@@ -857,6 +954,8 @@
             menuPrio.classList.remove('active');
             menuConf.classList.remove('active');
             menuConc.classList.remove('active');
+            menuAud.classList.remove('active');
+viewAud.style.display = 'none';
 
             // Hide views
             viewPrio.style.display = 'none';
@@ -884,7 +983,18 @@
                 viewConc.style.display = 'block';
                 document.getElementById('breadcrumb-current-module').textContent = "Conciliación y Exportación";
                 cargarDatosConc();
-            }
+            }else if (moduleName === 'auditoria') {
+
+    menuAud.classList.add('active');
+
+    viewAud.style.display = 'block';
+
+    document.getElementById(
+        'breadcrumb-current-module'
+    ).textContent = "Auditoría";
+
+    cargarAuditoria();
+}
             lucide.createIcons();
         };
 
@@ -986,7 +1096,13 @@
             <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.suma_monto_original)}</td>
             <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">${formatCurrency(f.suma_saldo_neto)}</td>
             <td style="text-align: center;">
-                <button class="review-btn" onclick="abrirDetalleBlade(${idx}); event.stopPropagation();">Auditar</button>
+        <button
+    onclick="abrirAuditoria(${f.proveedor_id})"
+>
+    Auditar
+</button>
+</a>
+
             </td>
         `;
                 tr.addEventListener('click', () => abrirDetalleBlade(idx));
@@ -1445,7 +1561,79 @@
             document.getElementById('conciliacion-modal').classList.remove('open');
         };
 
+const cargarAuditoria = async () => {
 
+    try {
+
+        tableBodyAuditoria.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center; padding:20px;">
+                    Cargando auditoría...
+                </td>
+            </tr>
+        `;
+
+        const response = await fetch('/api/auditoria/');
+
+        if (!response.ok) {
+            throw new Error('Error backend');
+        }
+
+        const data = await response.json();
+
+        tableBodyAuditoria.innerHTML = '';
+
+        let autorizados = 0;
+        let riesgos = 0;
+
+        data.forEach(a => {
+
+            if(a.accion === 'AUTORIZADO'){
+                autorizados++;
+            }
+
+            if(a.accion.includes('RIESGO')){
+                riesgos++;
+            }
+
+            tableBodyAuditoria.innerHTML += `
+                <tr>
+                    <td>${a.fecha}</td>
+                    <td>${a.proveedor}</td>
+                    <td>${a.folio}</td>
+                    <td>${a.usuario}</td>
+                    <td>${a.accion}</td>
+                    <td>${formatCurrency(a.abono)}</td>
+                    <td>${a.notas || '-'}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById(
+            'kpi-aud-total'
+        ).textContent = data.length;
+
+        document.getElementById(
+            'kpi-aud-ok'
+        ).textContent = autorizados;
+
+        document.getElementById(
+            'kpi-aud-risk'
+        ).textContent = riesgos;
+
+    } catch(err){
+
+        console.error(err);
+
+        tableBodyAuditoria.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center; color:red;">
+                    Error cargando auditoría
+                </td>
+            </tr>
+        `;
+    }
+};
         // --- FILTERS & LISTENERS FOR PRIORITIZATION ---
         starFilterPrio.addEventListener('change', (e) => {
             selectedStarPrioFilter = e.target.value;
@@ -1472,8 +1660,29 @@
         document.getElementById('live-date').textContent = new Date(2026, 4, 20).toLocaleDateString('es-MX', dateOptions);
 
         // Init
-        lucide.createIcons();
-        switchModule('priorizacion');
+lucide.createIcons();
+
+const params = new URLSearchParams(window.location.search);
+
+const modulo = params.get('modulo');
+const proveedor = params.get('proveedor');
+
+if(modulo === 'auditoria'){
+
+    switchModule('auditoria');
+
+    if(proveedor){
+        cargarAuditoria(proveedor);
+    }else{
+        cargarAuditoriaGeneral();
+    }
+
+}else{
+
+    switchModule('priorizacion');
+    cargarDatosPrio();
+
+}
     </script>
 
 </body>
