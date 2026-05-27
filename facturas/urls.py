@@ -13,6 +13,8 @@ urlpatterns = [
     path('api/pagos/por-proveedor/', views.api_pendientes_por_proveedor),
     path("api/facturas/<int:id_factura>/autorizar/", views.api_autorizar,           name="api_autorizar"),
     path("api/facturas/<int:id_factura>/revertir/",  views.api_revertir_a_pendiente, name="api_revertir"),
+    path("api/proveedores/<int:proveedor_id>/facturas/", views.api_facturas_por_proveedor, name="api_facturas_por_proveedor"),
+    path("api/facturas/autorizar-lote/", views.api_autorizar_lote, name="api_autorizar_lote"),
 
     # Screen 2 — Tab A: Confirmation Tray
     path("api/aprobados/",                          views.api_aprobados,           name="api_aprobados"),

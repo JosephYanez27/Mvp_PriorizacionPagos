@@ -382,6 +382,147 @@
             margin-top: 4px;
             display: none;
         }
+
+        /* Auditar Modal Specific Styling */
+        .modal-card.large {
+            max-width: 950px;
+            width: 90%;
+        }
+
+        .auditar-modal-header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .auditar-modal-meta {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 16px;
+        }
+
+        .auditar-modal-meta span strong {
+            color: var(--text-primary);
+        }
+
+        .auditar-table-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin: 16px 0;
+            background: #ffffff;
+        }
+
+        .auditar-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+
+        .auditar-table th {
+            position: sticky;
+            top: 0;
+            background: var(--bg-panel);
+            z-index: 10;
+            border-bottom: 2px solid var(--border);
+            padding: 10px 12px;
+        }
+
+        .auditar-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .auditar-table tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .checkbox-cell {
+            text-align: center;
+            width: 40px;
+        }
+
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .auditar-input-abono {
+            width: 100px;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            font-weight: 600;
+            text-align: right;
+            outline: none;
+        }
+
+        .auditar-input-abono:focus {
+            border-color: var(--accent);
+        }
+
+        .auditar-input-abono.error {
+            border-color: var(--danger);
+            background-color: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .auditar-input-notas {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 12px;
+            outline: none;
+            resize: none;
+            height: 32px;
+        }
+
+        .auditar-input-notas:focus {
+            border-color: var(--accent);
+        }
+
+        .auditar-summary-bar {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .auditar-summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auditar-summary-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .auditar-summary-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .auditar-summary-value.highlight {
+            color: var(--accent-dark);
+        }
     </style>
 </head>
 
@@ -526,7 +667,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tableBodyPrio">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -652,95 +793,95 @@
                     </div>
                 </div>
                 <!-- 4. SECCIÓN: AUDITORÍA -->
-<div id="view-auditoria" class="view-section" style="display:none;">
+                <div id="view-auditoria" class="view-section" style="display:none;">
 
-    <section class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <section class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
 
-        <div class="kpi-card info">
-            <div class="kpi-card-icon">
-                <i data-lucide="shield-check"></i>
-            </div>
+                        <div class="kpi-card info">
+                            <div class="kpi-card-icon">
+                                <i data-lucide="shield-check"></i>
+                            </div>
 
-            <p class="kpi-label">Auditorías Totales</p>
+                            <p class="kpi-label">Auditorías Totales</p>
 
-            <p class="kpi-value accent" id="kpi-aud-total">
-                0
-            </p>
+                            <p class="kpi-value accent" id="kpi-aud-total">
+                                0
+                            </p>
 
-            <p class="kpi-sub">
-                Revisiones registradas
-            </p>
-        </div>
+                            <p class="kpi-sub">
+                                Revisiones registradas
+                            </p>
+                        </div>
 
-        <div class="kpi-card success">
-            <div class="kpi-card-icon">
-                <i data-lucide="check-check"></i>
-            </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-card-icon">
+                                <i data-lucide="check-check"></i>
+                            </div>
 
-            <p class="kpi-label">Pagos Autorizados</p>
+                            <p class="kpi-label">Pagos Autorizados</p>
 
-            <p class="kpi-value success" id="kpi-aud-ok">
-                0
-            </p>
+                            <p class="kpi-value success" id="kpi-aud-ok">
+                                0
+                            </p>
 
-            <p class="kpi-sub">
-                Confirmados correctamente
-            </p>
-        </div>
+                            <p class="kpi-sub">
+                                Confirmados correctamente
+                            </p>
+                        </div>
 
-        <div class="kpi-card warning">
-            <div class="kpi-card-icon">
-                <i data-lucide="alert-triangle"></i>
-            </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-card-icon">
+                                <i data-lucide="alert-triangle"></i>
+                            </div>
 
-            <p class="kpi-label">Movimientos Críticos</p>
+                            <p class="kpi-label">Movimientos Críticos</p>
 
-            <p class="kpi-value warning" id="kpi-aud-risk">
-                0
-            </p>
+                            <p class="kpi-value warning" id="kpi-aud-risk">
+                                0
+                            </p>
 
-            <p class="kpi-sub">
-                Riesgo detectado
-            </p>
-        </div>
+                            <p class="kpi-sub">
+                                Riesgo detectado
+                            </p>
+                        </div>
 
-    </section>
+                    </section>
 
-    <section class="section-header">
-        <div>
-            <h2 class="section-title">
-                Historial de Auditoría
-            </h2>
+                    <section class="section-header">
+                        <div>
+                            <h2 class="section-title">
+                                Historial de Auditoría
+                            </h2>
 
-            <p class="section-subtitle">
-                Registro completo de movimientos operativos y autorizaciones.
-            </p>
-        </div>
-    </section>
+                            <p class="section-subtitle">
+                                Registro completo de movimientos operativos y autorizaciones.
+                            </p>
+                        </div>
+                    </section>
 
-    <div class="table-wrap">
-        <table>
+                    <div class="table-wrap">
+                        <table>
 
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Proveedor</th>
-                    <th>Factura</th>
-                    <th>Usuario</th>
-                    <th>Acción</th>
-                    <th>Abono</th>
-                    <th>Notas</th>
-                </tr>
-            </thead>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Proveedor</th>
+                                    <th>Factura</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Abono</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
 
-            <tbody id="tableBodyAuditoria">
+                            <tbody id="tableBodyAuditoria">
 
-            </tbody>
+                            </tbody>
 
-        </table>
-    </div>
+                        </table>
+                    </div>
 
-</div>
+                </div>
 
                 <!-- EMPTY STATE -->
                 <div id="emptyState"
@@ -884,6 +1025,64 @@
         </div>
     </div>
 
+    <!-- MODAL AUDITAR PROVEEDOR (BATCH AUDITING) -->
+    <div id="auditar-modal-overlay" class="modal-overlay"></div>
+    <div id="auditar-modal" class="modal-card large">
+        <div class="modal-header">
+            <div>
+                <h3 id="auditar-modal-title" style="font-size: 16px; margin: 0;">Auditar Proveedor: </h3>
+                <div class="auditar-modal-header-info">
+                    <span id="auditar-modal-stars"></span>
+                    <div class="auditar-modal-meta">
+                        <span>Facturas: <strong id="auditar-modal-count">0</strong></span>
+                        <span>Saldo Total: <strong id="auditar-modal-total-deuda">$0.00</strong></span>
+                    </div>
+                </div>
+            </div>
+            <button class="modal-close" onclick="cerrarAuditarModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding: 18px 24px;">
+            <div class="auditar-table-wrap">
+                <table class="auditar-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">
+                                <input type="checkbox" id="auditar-master-checkbox" class="checkbox-custom" checked>
+                            </th>
+                            <th style="width: 110px;">Folio</th>
+                            <th style="width: 100px; text-align: center;">Scoring</th>
+                            <th style="width: 110px; text-align: center;">Vencimiento</th>
+                            <th style="width: 130px; text-align: right;">Saldo Neto</th>
+                            <th style="width: 140px; text-align: right;">Abono a Autorizar</th>
+                            <th>Notas de Auditoría</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditar-table-body">
+                        <!-- Dynamic rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="auditar-summary-bar">
+                <div class="auditar-summary-item">
+                    <span class="auditar-summary-label">Facturas Seleccionadas</span>
+                    <span class="auditar-summary-value" id="auditar-selected-count">0 de 0</span>
+                </div>
+                <div class="auditar-summary-item" style="text-align: right;">
+                    <span class="auditar-summary-label">Monto Total a Autorizar</span>
+                    <span class="auditar-summary-value highlight" id="auditar-selected-total">$0.00</span>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="margin-top: 16px; justify-content: flex-end;">
+                <button type="button" class="nav-btn secondary-outline" onclick="cerrarAuditarModal()">Cancelar</button>
+                <button type="button" class="nav-btn primary" id="auditar-submit-btn" onclick="enviarAuditoriaLote()">
+                    Autorizar Selección
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATIONS -->
     <div id="toast">Operación procesada con éxito.</div>
 
@@ -915,8 +1114,8 @@
         const tableBodyConf = document.getElementById('tableBodyConf');
         const tableBodyConc = document.getElementById('tableBodyConc');
         const viewAud = document.getElementById('view-auditoria');
-const menuAud = document.getElementById('menu-auditoria');
-const tableBodyAuditoria = document.getElementById('tableBodyAuditoria');
+        const menuAud = document.getElementById('menu-auditoria');
+        const tableBodyAuditoria = document.getElementById('tableBodyAuditoria');
 
         const emptyState = document.getElementById('emptyState');
 
@@ -955,7 +1154,7 @@ const tableBodyAuditoria = document.getElementById('tableBodyAuditoria');
             menuConf.classList.remove('active');
             menuConc.classList.remove('active');
             menuAud.classList.remove('active');
-viewAud.style.display = 'none';
+            viewAud.style.display = 'none';
 
             // Hide views
             viewPrio.style.display = 'none';
@@ -983,18 +1182,18 @@ viewAud.style.display = 'none';
                 viewConc.style.display = 'block';
                 document.getElementById('breadcrumb-current-module').textContent = "Conciliación y Exportación";
                 cargarDatosConc();
-            }else if (moduleName === 'auditoria') {
+            } else if (moduleName === 'auditoria') {
 
-    menuAud.classList.add('active');
+                menuAud.classList.add('active');
 
-    viewAud.style.display = 'block';
+                viewAud.style.display = 'block';
 
-    document.getElementById(
-        'breadcrumb-current-module'
-    ).textContent = "Auditoría";
+                document.getElementById(
+                    'breadcrumb-current-module'
+                ).textContent = "Auditoría";
 
-    cargarAuditoria();
-}
+                cargarAuditoria();
+            }
             lucide.createIcons();
         };
 
@@ -1096,16 +1295,12 @@ viewAud.style.display = 'none';
             <td style="text-align: right; font-family: var(--font-mono);">${formatCurrency(f.suma_monto_original)}</td>
             <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">${formatCurrency(f.suma_saldo_neto)}</td>
             <td style="text-align: center;">
-        <button
-    onclick="abrirAuditoria(${f.proveedor_id})"
->
-    Auditar
-</button>
-</a>
-
+                <button class="review-btn" onclick="event.stopPropagation(); abrirAuditoria(${f.proveedor_id})">
+                    Auditar
+                </button>
             </td>
         `;
-                tr.addEventListener('click', () => abrirDetalleBlade(idx));
+                tr.addEventListener('click', () => abrirAuditarModal(f.proveedor_id, f.proveedor, f.estrellas));
                 tableBodyPrio.appendChild(tr);
             });
 
@@ -1561,11 +1756,11 @@ viewAud.style.display = 'none';
             document.getElementById('conciliacion-modal').classList.remove('open');
         };
 
-const cargarAuditoria = async () => {
+        const cargarAuditoria = async () => {
 
-    try {
+            try {
 
-        tableBodyAuditoria.innerHTML = `
+                tableBodyAuditoria.innerHTML = `
             <tr>
                 <td colspan="7" style="text-align:center; padding:20px;">
                     Cargando auditoría...
@@ -1573,30 +1768,29 @@ const cargarAuditoria = async () => {
             </tr>
         `;
 
-        const response = await fetch('/api/auditoria/');
+                const response = await fetch('/api/auditoria/');
 
-        if (!response.ok) {
-            throw new Error('Error backend');
-        }
+                if (!response.ok) {
+                    throw new Error('Error backend');
+                }
 
-        const data = await response.json();
+                const data = await response.json();
 
-        tableBodyAuditoria.innerHTML = '';
+                tableBodyAuditoria.innerHTML = '';
 
-        let autorizados = 0;
-        let riesgos = 0;
+                let autorizados = 0;                let riesgos = 0;
 
-        data.forEach(a => {
+                data.forEach(a => {
 
-            if(a.accion === 'AUTORIZADO'){
-                autorizados++;
-            }
+                    if (a.accion === 'AUTORIZADO') {
+                        autorizados++;
+                    }
 
-            if(a.accion.includes('RIESGO')){
-                riesgos++;
-            }
+                    if (a.accion.includes('RIESGO')) {
+                        riesgos++;
+                    }
 
-            tableBodyAuditoria.innerHTML += `
+                    tableBodyAuditoria.innerHTML += `
                 <tr>
                     <td>${a.fecha}</td>
                     <td>${a.proveedor}</td>
@@ -1607,33 +1801,251 @@ const cargarAuditoria = async () => {
                     <td>${a.notas || '-'}</td>
                 </tr>
             `;
-        });
+                });
 
-        document.getElementById(
-            'kpi-aud-total'
-        ).textContent = data.length;
+                document.getElementById(
+                    'kpi-aud-total'
+                ).textContent = data.length;
 
-        document.getElementById(
-            'kpi-aud-ok'
-        ).textContent = autorizados;
+                document.getElementById(
+                    'kpi-aud-ok'
+                ).textContent = autorizados;
 
-        document.getElementById(
-            'kpi-aud-risk'
-        ).textContent = riesgos;
+                document.getElementById(
+                    'kpi-aud-risk'
+                ).textContent = riesgos;
 
-    } catch(err){
+            } catch (err) {
 
-        console.error(err);
+                console.error(err);
 
-        tableBodyAuditoria.innerHTML = `
+                tableBodyAuditoria.innerHTML = `
             <tr>
                 <td colspan="7" style="text-align:center; color:red;">
                     Error cargando auditoría
                 </td>
             </tr>
         `;
-    }
-};
+            }
+        };
+
+        // --- BATCH AUDITING MODAL LOGIC ---
+        let modalFacturas = [];
+
+        const abrirAuditarModal = async (proveedorId, proveedorNombre, estrellas) => {
+            document.getElementById('auditar-modal-title').textContent = `Auditar Proveedor: ${proveedorNombre}`;
+            document.getElementById('auditar-modal-stars').innerHTML = buildStarsHtml(estrellas);
+            
+            const tbody = document.getElementById('auditar-table-body');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Cargando facturas...</td></tr>`;
+            
+            document.getElementById('auditar-modal-count').textContent = '0';
+            document.getElementById('auditar-modal-total-deuda').textContent = formatCurrency(0);
+            document.getElementById('auditar-selected-count').textContent = '0 de 0';
+            document.getElementById('auditar-selected-total').textContent = formatCurrency(0);
+            
+            document.getElementById('auditar-master-checkbox').checked = true;
+            document.getElementById('auditar-submit-btn').disabled = false;
+
+            document.getElementById('auditar-modal-overlay').classList.add('open');
+            document.getElementById('auditar-modal').classList.add('open');
+
+            try {
+                const response = await fetch(`/api/proveedores/${proveedorId}/facturas/`);
+                if (!response.ok) throw new Error('Error al cargar facturas');
+                
+                modalFacturas = await response.json();
+                
+                if (modalFacturas.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">No hay facturas pendientes para este proveedor.</td></tr>`;
+                    return;
+                }
+
+                let totalDeuda = 0;
+                modalFacturas.forEach(f => {
+                    totalDeuda += f.saldo_neto;
+                    f.selected = true;
+                    f.abono_input = f.saldo_neto;
+                    f.notas_input = '';
+                });
+
+                document.getElementById('auditar-modal-count').textContent = modalFacturas.length;
+                document.getElementById('auditar-modal-total-deuda').textContent = formatCurrency(totalDeuda);
+
+                renderAuditarModalTable();
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--danger); font-weight: 600;">✕ Error al cargar las facturas del proveedor.</td></tr>`;
+            }
+        };
+
+        const renderAuditarModalTable = () => {
+            const tbody = document.getElementById('auditar-table-body');
+            tbody.innerHTML = '';
+
+            modalFacturas.forEach((f, idx) => {
+                const tr = document.createElement('tr');
+                
+                let scoringColor = 'var(--accent)';
+                if (f.scoring >= 75) scoringColor = 'var(--danger)';
+                else if (f.scoring >= 50) scoringColor = 'var(--warning)';
+
+                tr.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" class="checkbox-custom row-checkbox" data-idx="${idx}" ${f.selected ? 'checked' : ''}>
+                    </td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; font-size: 13px;">${f.folio}</td>
+                    <td style="text-align: center;">
+                        <span class="badge" style="background: ${scoringColor}15; color: ${scoringColor}; font-weight: 700;">${f.scoring}%</span>
+                    </td>
+                    <td style="text-align: center; color: var(--text-secondary);">${f.dias_vencidos} días</td>
+                    <td style="text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">${formatCurrency(f.saldo_neto)}</td>
+                    <td style="text-align: right;">
+                        <input type="number" step="0.01" min="0" max="${f.saldo_neto}" 
+                               class="auditar-input-abono" data-idx="${idx}" value="${f.abono_input.toFixed(2)}"
+                               ${!f.selected ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <input type="text" class="auditar-input-notas" data-idx="${idx}" 
+                               placeholder="Notas de auditoría..." value="${f.notas_input}"
+                               ${!f.selected ? 'disabled' : ''}>
+                    </td>
+                `;
+
+                const checkbox = tr.querySelector('.row-checkbox');
+                const abonoInput = tr.querySelector('.auditar-input-abono');
+                const notasInput = tr.querySelector('.auditar-input-notas');
+
+                checkbox.addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    f.selected = isChecked;
+                    abonoInput.disabled = !isChecked;
+                    notasInput.disabled = !isChecked;
+                    
+                    if (isChecked && (parseFloat(abonoInput.value) === 0 || abonoInput.value === '')) {
+                        abonoInput.value = f.saldo_neto.toFixed(2);
+                        f.abono_input = f.saldo_neto;
+                    }
+
+                    const allChecked = modalFacturas.every(item => item.selected);
+                    document.getElementById('auditar-master-checkbox').checked = allChecked;
+
+                    actualizarAuditarModalResumen();
+                });
+
+                abonoInput.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (isNaN(val) || val < 0) {
+                        e.target.classList.add('error');
+                        f.abono_input = 0;
+                    } else if (val > f.saldo_neto) {
+                        e.target.classList.add('error');
+                        f.abono_input = val;
+                    } else {
+                        e.target.classList.remove('error');
+                        f.abono_input = val;
+                    }
+                    actualizarAuditarModalResumen();
+                });
+
+                notasInput.addEventListener('input', (e) => {
+                    f.notas_input = e.target.value;
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            actualizarAuditarModalResumen();
+        };
+
+        const actualizarAuditarModalResumen = () => {
+            let selectedCount = 0;
+            let totalAbonar = 0;
+            let hasErrors = false;
+
+            modalFacturas.forEach(f => {
+                if (f.selected) {
+                    selectedCount++;
+                    totalAbonar += f.abono_input;
+                    
+                    if (f.abono_input < 0 || f.abono_input > f.saldo_neto || isNaN(f.abono_input)) {
+                        hasErrors = true;
+                    }
+                }
+            });
+
+            document.getElementById('auditar-selected-count').textContent = `${selectedCount} de ${modalFacturas.length}`;
+            document.getElementById('auditar-selected-total').textContent = formatCurrency(totalAbonar);
+            
+            const submitBtn = document.getElementById('auditar-submit-btn');
+            submitBtn.disabled = (selectedCount === 0 || hasErrors);
+        };
+
+        const cerrarAuditarModal = () => {
+            document.getElementById('auditar-modal-overlay').classList.remove('open');
+            document.getElementById('auditar-modal').classList.remove('open');
+            modalFacturas = [];
+        };
+
+        document.getElementById('auditar-master-checkbox').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            modalFacturas.forEach(f => {
+                f.selected = isChecked;
+            });
+            renderAuditarModalTable();
+        });
+
+        const enviarAuditoriaLote = async () => {
+            const selectedInvoices = modalFacturas.filter(f => f.selected);
+            if (selectedInvoices.length === 0) return;
+
+            const submitBtn = document.getElementById('auditar-submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = "Autorizando lote...";
+            submitBtn.disabled = true;
+
+            const payload = {
+                autorizaciones: selectedInvoices.map(f => ({
+                    id_factura: f.id,
+                    abono: f.abono_input,
+                    notas_auditoria: f.notas_input
+                }))
+            };
+
+            try {
+                const response = await fetch('/api/facturas/autorizar-lote/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await response.json();
+                if (res.ok) {
+                    showToast(`✅ ${res.message}`);
+                    cerrarAuditarModal();
+                    cargarDatosPrio();
+                } else {
+                    showToast(`❌ Error: ${res.error}`, false);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("✕ Fallo de red al autorizar facturas.", false);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        };
+
+        const abrirAuditoria = (proveedorId) => {
+            const prov = currentPrioList.find(p => p.proveedor_id === proveedorId);
+            if (prov) {
+                abrirAuditarModal(prov.proveedor_id, prov.proveedor, prov.estrellas);
+            }
+        };
+
         // --- FILTERS & LISTENERS FOR PRIORITIZATION ---
         starFilterPrio.addEventListener('change', (e) => {
             selectedStarPrioFilter = e.target.value;
@@ -1660,29 +2072,29 @@ const cargarAuditoria = async () => {
         document.getElementById('live-date').textContent = new Date(2026, 4, 20).toLocaleDateString('es-MX', dateOptions);
 
         // Init
-lucide.createIcons();
+        lucide.createIcons();
 
-const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(window.location.search);
 
-const modulo = params.get('modulo');
-const proveedor = params.get('proveedor');
+        const modulo = params.get('modulo');
+        const proveedor = params.get('proveedor');
 
-if(modulo === 'auditoria'){
+        if (modulo === 'auditoria') {
 
-    switchModule('auditoria');
+            switchModule('auditoria');
 
-    if(proveedor){
-        cargarAuditoria(proveedor);
-    }else{
-        cargarAuditoriaGeneral();
-    }
+            if (proveedor) {
+                cargarAuditoria(proveedor);
+            } else {
+                cargarAuditoriaGeneral();
+            }
 
-}else{
+        } else {
 
-    switchModule('priorizacion');
-    cargarDatosPrio();
+            switchModule('priorizacion');
+            cargarDatosPrio();
 
-}
+        }
     </script>
 
 </body>

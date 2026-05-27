@@ -204,6 +204,106 @@ def api_revertir_a_pendiente(request, id_factura: int):
     return _json_ok(_serialize_factura(factura), message="Factura revertida a PENDIENTE.")
 
 
+@require_http_methods(["GET"])
+def api_facturas_por_proveedor(request, proveedor_id: int):
+    """
+    GET /api/proveedores/<proveedor_id>/facturas/
+    Returns all PENDIENTE invoices for a specific provider, sorted by scoring DESC.
+    """
+    facturas = (
+        Factura.objects
+        .filter(proveedor_id=proveedor_id, estado="PENDIENTE")
+        .select_related("proveedor")
+        .order_by("folio")
+    )
+    data = sorted(
+        [_serialize_factura(f) for f in facturas],
+        key=lambda x: x["scoring"],
+        reverse=True
+    )
+    return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_autorizar_lote(request):
+    """
+    POST /api/facturas/autorizar-lote/
+    Body (JSON): {
+        "autorizaciones": [
+            { "id_factura": int, "abono": float, "notas_auditoria": str },
+            ...
+        ]
+    }
+    Transitions PENDIENTE → APROBADO in bulk atomically.
+    """
+    try:
+        body = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return _json_error("JSON inválido en el cuerpo de la solicitud.")
+
+    autorizaciones = body.get("autorizaciones", [])
+    if not isinstance(autorizaciones, list):
+        return _json_error("El campo 'autorizaciones' debe ser una lista.")
+
+    if not autorizaciones:
+        return _json_error("No se enviaron autorizaciones en el lote.")
+
+    factura_ids = [item.get("id_factura") for item in autorizaciones if item.get("id_factura")]
+    
+    # Prefetch/verify facturas
+    facturas_dict = {
+        f.id_factura: f for f in 
+        Factura.objects.filter(pk__in=factura_ids, estado="PENDIENTE").select_related("proveedor")
+    }
+
+    # Validate all items before writing anything
+    to_update = []
+    errors = []
+
+    for idx, item in enumerate(autorizaciones):
+        id_factura = item.get("id_factura")
+        if not id_factura:
+            errors.append(f"Elemento en índice {idx}: falta 'id_factura'.")
+            continue
+
+        factura = facturas_dict.get(id_factura)
+        if not factura:
+            errors.append(f"Factura ID {id_factura} no encontrada o no está en estado PENDIENTE.")
+            continue
+
+        try:
+            abono = Decimal(str(item.get("abono", 0) or 0))
+        except (InvalidOperation, TypeError, ValueError):
+            errors.append(f"Factura {factura.folio}: El monto del abono no es válido.")
+            continue
+
+        if abono < 0:
+            errors.append(f"Factura {factura.folio}: El abono no puede ser negativo.")
+            continue
+
+        if abono > factura.saldo_neto:
+            errors.append(f"Factura {factura.folio}: El abono ({abono}) supera el saldo neto disponible ({factura.saldo_neto}).")
+            continue
+
+        to_update.append((factura, abono, item.get("notas_auditoria", "")))
+
+    if errors:
+        return _json_error("Error de validación en el lote:\n" + "\n".join(errors))
+
+    # Apply changes atomically
+    with transaction.atomic():
+        serialized_results = []
+        for factura, abono, notas in to_update:
+            factura.notas_auditoria = notas
+            factura.total_abonado = factura.total_abonado + abono
+            factura.estado = "APROBADO"
+            factura.save()
+            serialized_results.append(_serialize_factura(factura))
+
+    return _json_ok(serialized_results, message=f"{len(to_update)} facturas autorizadas correctamente.")
+
+
 # ---------------------------------------------------------------------------
 # SCREEN 2 — Tab A: Confirmation Tray
 # ---------------------------------------------------------------------------
