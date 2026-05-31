@@ -1,0 +1,263 @@
+{% extends "tesoreria/base.html" %}
+{% load static %}
+
+{% block title %}Priorización de Pagos — Tesorería{% endblock %}
+{% block breadcrumb %}Priorización de Pagos{% endblock %}
+{% block nav_prio %}active{% endblock %}
+
+{# ── CSS extra del módulo ─────────────────────────────── #}
+{% block extra_css %}
+<style>
+    .filter-select {
+        padding: 8px 32px 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        outline: none;
+        font-family: var(--font-sans);
+        background: #ffffff;
+        font-size: 13.5px;
+        color: var(--text-primary);
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        min-width: 170px;
+        transition: border-color 0.15s;
+    }
+    .filter-select:focus { border-color: var(--accent); }
+
+    .star-container { display: flex; justify-content: center; gap: 2px; }
+    .star-svg { width: 14px; height: 14px; }
+
+    /* Modal de carga */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15,23,42,0.35); backdrop-filter: blur(4px);
+        z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-card {
+        position: fixed; top: 50%; left: 50%;
+        transform: translate(-50%, -45%) scale(0.95);
+        background: #ffffff; width: 100%; max-width: 460px;
+        border-radius: var(--radius); box-shadow: var(--shadow-lg);
+        z-index: 201; opacity: 0; pointer-events: none;
+        transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+        border: 1px solid var(--border); overflow: hidden;
+    }
+    .modal-card.open { opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1); }
+    .modal-card.large { max-width: 950px; width: 90%; }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--bg-panel);
+    }
+    .modal-header h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .modal-close { background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px; transition: color 0.2s; }
+    .modal-close:hover { color: var(--danger); }
+    .modal-body { padding: 24px; }
+    .modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+
+    .file-dropzone {
+        border: 2px dashed var(--border); border-radius: var(--radius-sm);
+        padding: 32px 20px; text-align: center; background: var(--bg-panel);
+        cursor: pointer; transition: border-color 0.2s, background-color 0.2s;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .file-dropzone:hover { border-color: var(--accent); background: var(--accent-light); }
+    .file-dropzone input[type="file"] { display: none; }
+    .file-dropzone p { margin: 0; font-size: 12.5px; color: var(--text-secondary); }
+    .file-dropzone .file-name-preview { font-size: 13px; font-weight: 600; color: var(--accent-dark); display: none; word-break: break-all; }
+
+    /* Auditar modal extras */
+    .auditar-modal-header-info { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+    .auditar-modal-meta { font-size: 12.5px; color: var(--text-muted); display: flex; gap: 16px; }
+    .auditar-modal-meta span strong { color: var(--text-primary); }
+    .auditar-table-wrap { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 16px 0; background: #ffffff; }
+    .auditar-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .auditar-table th { position: sticky; top: 0; background: var(--bg-panel); z-index: 10; border-bottom: 2px solid var(--border); padding: 10px 12px; }
+    .auditar-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .auditar-table tr:hover td { background: var(--bg-hover); }
+    .checkbox-cell { text-align: center; width: 40px; }
+    .checkbox-custom { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+    .auditar-input-abono { width: 100px; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; text-align: right; outline: none; }
+    .auditar-input-abono:focus { border-color: var(--accent); }
+    .auditar-input-abono.error { border-color: var(--danger); background-color: var(--danger-bg); color: var(--danger); }
+    .auditar-input-notas { width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 12px; outline: none; resize: none; height: 32px; }
+    .auditar-input-notas:focus { border-color: var(--accent); }
+    .auditar-summary-bar { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .auditar-summary-item { display: flex; flex-direction: column; }
+    .auditar-summary-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .auditar-summary-value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .auditar-summary-value.highlight { color: var(--accent-dark); }
+
+    /* Blade */
+    .blade-input-container { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-top: 6px; }
+    .blade-input-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+    .blade-amount-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 15px; font-weight: 600; outline: none; transition: border-color 0.15s; }
+    .blade-amount-input:focus { border-color: var(--accent); }
+    .error-message { color: var(--danger); font-size: 11px; font-weight: 500; margin-top: 4px; display: none; }
+
+    .nav-btn.secondary-outline { background: #ffffff; color: var(--text-secondary); border: 1px solid var(--border); padding: 8px 14px; font-size: 12.5px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; transition: all 0.2s; }
+    .nav-btn.secondary-outline:hover { background: var(--bg-panel); color: var(--text-primary); border-color: #d1d5db; }
+    .nav-btn.primary { display: flex; align-items: center; gap: 6px; }
+</style>
+{% endblock %}
+
+{# ── HTML del módulo ──────────────────────────────────── #}
+{% block content %}
+
+<!-- KPIs -->
+<section class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
+        <p class="kpi-label">Deuda Total en Fila</p>
+        <p class="kpi-value accent" id="kpi-prio-total">$0.00</p>
+        <p class="kpi-sub" id="kpi-prio-count">0 facturas en cola</p>
+    </div>
+    <div class="kpi-card warning">
+        <div class="kpi-card-icon"><i data-lucide="users"></i></div>
+        <p class="kpi-label">Proveedores Pendientes</p>
+        <p class="kpi-value warning" id="kpi-prio-criticos">0</p>
+        <p class="kpi-sub">Cuentas por liquidar</p>
+    </div>
+    <div class="kpi-card success">
+        <div class="kpi-card-icon"><i data-lucide="star"></i></div>
+        <p class="kpi-label">Promedio de Estrellas</p>
+        <p class="kpi-value success" id="kpi-prio-avg-estrellas">0.0</p>
+        <p class="kpi-sub">Importancia de la cartera</p>
+    </div>
+</section>
+
+<section class="section-header">
+    <div>
+        <h2 class="section-title">Cuentas por Pagar (Agrupado)</h2>
+        <p class="section-subtitle">Visualiza la deuda total pendiente agrupada por proveedor.</p>
+    </div>
+</section>
+
+<div class="filter-bar">
+    <div style="position:relative;width:280px;">
+        <input type="text" id="searchInputPrio" placeholder="Buscar por folio o proveedor..."
+            style="width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;font-family:var(--font-sans);font-size:14px;">
+        <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-muted);opacity:0.7;"></i>
+    </div>
+
+    <select id="starFilterPrio" class="filter-select">
+        <option value="all">★ Todos los Niveles</option>
+        <option value="5">★★★★★ 5 Estrellas</option>
+        <option value="4">★★★★ 4 Estrellas</option>
+        <option value="3">★★★ 3 Estrellas</option>
+        <option value="2">★★ 2 Estrellas</option>
+        <option value="1">★ 1 Estrella</option>
+    </select>
+
+    <button id="sortBtnPrio" class="nav-btn primary" style="margin-left:auto;padding:8px 14px;font-size:12.5px;">
+        <span>Deuda: Mayor a Menor</span>
+        <i data-lucide="arrow-down-narrow-wide" id="sort-icon-prio" style="width:14px;height:14px;"></i>
+    </button>
+
+    <button class="nav-btn secondary-outline" onclick="abrirModalCarga()">
+        <i data-lucide="file-spreadsheet" style="width:14px;height:14px;color:var(--accent);"></i>
+        <span>Importar Facturas</span>
+    </button>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:80px;text-align:center;">Facturas</th>
+                <th style="width:200px;">Folios</th>
+                <th>Proveedor</th>
+                <th style="text-align:center;">Prioridad</th>
+                <th style="text-align:right;">Suma Original</th>
+                <th style="text-align:right;">Deuda Total (MXN)</th>
+                <th style="text-align:center;">Acción</th>
+            </tr>
+        </thead>
+        <tbody id="tableBodyPrio"></tbody>
+    </table>
+</div>
+
+<div id="emptyState" style="display:none;padding:48px;text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-top:16px;">
+    <p style="font-size:14px;color:var(--text-muted);font-weight:500;">Ningún registro coincide con los criterios.</p>
+</div>
+
+<!-- ── BLADE (drawer lateral) ─────────────────────────── -->
+<div id="blade-overlay"></div>
+<div id="blade">
+    <div class="blade-header">
+        <div>
+            <h3 class="blade-title" id="blade-folio">Folio Factura</h3>
+            <p class="blade-subtitle" id="blade-prov-name">Proveedor Detalle</p>
+        </div>
+        <button class="blade-close" id="closeBladeBtn">×</button>
+    </div>
+    <div class="blade-body">
+        <div class="info-grid">
+            <div class="info-item"><p class="info-item-label">Monto Original</p><p class="info-item-value" id="blade-monto-orig">$0.00</p></div>
+            <div class="info-item"><p class="info-item-label">Monto Equivalente MXN</p><p class="info-item-value" id="blade-monto-mxn">$0.00</p></div>
+            <div class="info-item"><p class="info-item-label">Total Factura</p><p class="info-item-value" id="blade-total">$0.00</p></div>
+            <div class="info-item"><p class="info-item-label">Saldo Neto Pendiente</p><p class="info-item-value text-accent" id="blade-saldo-neto">$0.00</p></div>
+        </div>
+        <div class="alert-box critical" id="blade-alert-zone">
+            <p class="alert-label" id="blade-alert-title">Riesgo Crítico Operativo</p>
+            <p class="alert-text" id="blade-alert-desc">Riesgo calculado por antigüedad y scoring comercial.</p>
+        </div>
+        <div>
+            <p class="justificacion-label">Factores de Riesgo</p>
+            <div class="causa-row">
+                <span class="causa-label">Calificación Comercial (Estrellas)</span>
+                <span class="causa-badge causa-adm" id="blade-factor-prov">0 / 5</span>
+            </div>
+            <div class="causa-row">
+                <span class="causa-label">Antigüedad de Vencimiento</span>
+                <span class="causa-badge causa-prov" id="blade-factor-tiempo">0 días</span>
+            </div>
+        </div>
+        <div class="blade-input-container">
+            <p class="blade-input-label">Monto de Abono Autorizado (MXN)</p>
+            <input type="number" id="abonoInput" step="0.01" class="blade-amount-input" placeholder="0.00">
+            <span class="error-message" id="abono-error-msg">El abono excede el saldo de la factura.</span>
+            <p class="blade-input-label" style="margin-top:14px;">Notas de Auditoría (Opcional)</p>
+            <textarea id="notasAuditoriaInput" class="justificacion-input" placeholder="Escribe notas de tesorería y motivos de dispersión..."></textarea>
+        </div>
+    </div>
+    <div class="blade-footer">
+        <div class="blade-actions">
+            <button class="action-btn rechazar" id="cancelBladeBtn">Cancelar</button>
+            <button class="action-btn aprobar" id="confirmAutorizarBtn">Autorizar Pago</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL CARGAR FACTURAS ─────────────────────────── -->
+<div id="upload-modal-overlay" class="modal-overlay"></div>
+<div id="upload-modal" class="modal-card">
+    <div class="modal-header">
+        <h3>Subir Lote de Facturas</h3>
+        <button class="modal-close" onclick="cerrarModalCarga()">×</button>
+    </div>
+    <form method="POST" enctype="multipart/form-data" class="modal-body" id="formSubirExcel">
+        {% csrf_token %}
+        <div class="file-dropzone" onclick="document.getElementById('excelFileInput').click()">
+            <i data-lucide="upload-cloud" style="width:36px;height:36px;color:var(--text-muted);opacity:0.8;"></i>
+            <p id="dropzone-text">Haz clic aquí para seleccionar tu archivo Excel (.xlsx, .xls)</p>
+            <span id="file-name-preview" class="file-name-preview"></span>
+            <input type="file" name="archivo" id="excelFileInput" accept=".xlsx, .xls" required>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="nav-btn secondary-outline" onclick="cerrarModalCarga()">Cancelar</button>
+            <button type="submit" class="nav-btn primary" id="submitBtn">Importar Facturas</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{# ── JS del módulo ─────────────────────────────────── #}
+{% block extra_js %}
+<script src="{% static 'js/priorizacion.js' %}"></script>
+{% endblock %}

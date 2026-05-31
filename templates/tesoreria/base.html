@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tesorería Inteligente{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+<div class="shell">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="badge">SISTEMA VIVO</div>
+            <h1>Tesorería Inteligente</h1>
+            <p>Análisis de Riesgo Operativo</p>
+        </div>
+
+        <nav class="nav-section">
+            <p class="nav-label">Módulos</p>
+
+            <a href="/" class="nav-item {% block nav_prio %}{% endblock %}">
+                <i data-lucide="layers" style="width:18px;height:18px;"></i>
+                <span>Priorización Pagos</span>
+            </a>
+            <a href="/confirmacion/" class="nav-item {% block nav_conf %}{% endblock %}">
+                <i data-lucide="check-square" style="width:18px;height:18px;"></i>
+                <span>Bandeja de Confirmación</span>
+            </a>
+            <a href="/conciliacion/" class="nav-item {% block nav_conc %}{% endblock %}">
+                <i data-lucide="refresh-cw" style="width:18px;height:18px;"></i>
+                <span>Conciliación y Exportación</span>
+            </a>
+            <a href="/auditoria/" class="nav-item {% block nav_aud %}{% endblock %}">
+                <i data-lucide="clipboard-list" style="width:18px;height:18px;"></i>
+                <span>Auditoría Proveedor</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-row">
+                <span>Base de Datos:</span>
+                <span class="sidebar-footer-val green">Conectada</span>
+            </div>
+            <div class="sidebar-footer-row">
+                <span>Motor Scoring:</span>
+                <span class="sidebar-footer-val">v2.5 (Dynamic-Min)</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+
+        <header class="navbar">
+            <div class="navbar-left">
+                <span class="breadcrumb-item">Mvp</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="breadcrumb-item">{% block breadcrumb %}{% endblock %}</span>
+            </div>
+            <div class="navbar-right">
+                <div class="status-chip">
+                    <div class="status-dot"></div>
+                    <span class="status-label">Flujo Sincronizado</span>
+                </div>
+                <span class="date-display" id="live-date"></span>
+            </div>
+        </header>
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+
+    </main>
+</div>
+
+<!-- MODAL AUDITAR PROVEEDOR (BATCH AUDITING) — compartido entre módulos -->
+<div id="auditar-modal-overlay" class="modal-overlay"></div>
+<div id="auditar-modal" class="modal-card large">
+    <div class="modal-header">
+        <div>
+            <h3 id="auditar-modal-title" style="font-size:16px;margin:0;">Auditar Proveedor: </h3>
+            <div class="auditar-modal-header-info">
+                <span id="auditar-modal-stars"></span>
+                <div class="auditar-modal-meta">
+                    <span>Facturas: <strong id="auditar-modal-count">0</strong></span>
+                    <span>Saldo Total: <strong id="auditar-modal-total-deuda">$0.00</strong></span>
+                </div>
+            </div>
+        </div>
+        <button class="modal-close" onclick="cerrarAuditarModal()">×</button>
+    </div>
+    <div class="modal-body" style="padding:18px 24px;">
+        <div class="auditar-table-wrap">
+            <table class="auditar-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" id="auditar-master-checkbox" class="checkbox-custom" checked>
+                        </th>
+                        <th style="width:110px;">Folio</th>
+                        <th style="width:100px;text-align:center;">Scoring</th>
+                        <th style="width:110px;text-align:center;">Vencimiento</th>
+                        <th style="width:130px;text-align:right;">Saldo Neto</th>
+                        <th style="width:140px;text-align:right;">Abono a Autorizar</th>
+                        <th>Notas de Auditoría</th>
+                    </tr>
+                </thead>
+                <tbody id="auditar-table-body"></tbody>
+            </table>
+        </div>
+
+        <div class="auditar-summary-bar">
+            <div class="auditar-summary-item">
+                <span class="auditar-summary-label">Facturas Seleccionadas</span>
+                <span class="auditar-summary-value" id="auditar-selected-count">0 de 0</span>
+            </div>
+            <div class="auditar-summary-item" style="text-align:right;">
+                <span class="auditar-summary-label">Monto Total a Autorizar</span>
+                <span class="auditar-summary-value highlight" id="auditar-selected-total">$0.00</span>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top:16px;">
+            <button type="button" class="nav-btn secondary-outline" onclick="cerrarAuditarModal()">Cancelar</button>
+            <button type="button" class="nav-btn primary" id="auditar-submit-btn" onclick="enviarAuditoriaLote()">
+                Autorizar Selección
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">Operación procesada con éxito.</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="{% static 'js/globals.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
+
+<script>
+    document.getElementById('live-date').textContent =
+        new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

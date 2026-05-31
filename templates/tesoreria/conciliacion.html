@@ -1,0 +1,170 @@
+{% extends "tesoreria/base.html" %}
+{% load static %}
+
+{% block title %}Conciliación y Exportación — Tesorería{% endblock %}
+{% block breadcrumb %}Conciliación y Exportación{% endblock %}
+{% block nav_conc %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tooltip-info {
+        display: inline-flex; align-items: center; gap: 4px;
+        color: var(--text-muted); font-size: 11px; margin-top: 4px;
+    }
+    .conciliacion-controls {
+        display: flex; align-items: center; justify-content: space-between;
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px;
+        box-shadow: var(--shadow-sm);
+    }
+    .dropzone-compact {
+        flex: 1; max-width: 420px;
+        border: 2px dashed var(--border); border-radius: var(--radius-sm);
+        padding: 14px 18px; text-align: center; background: var(--bg-panel);
+        cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
+    .dropzone-compact:hover { border-color: var(--accent); background: var(--accent-light); }
+
+    /* Modal conciliación */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15,23,42,0.35); backdrop-filter: blur(4px);
+        z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-card {
+        position: fixed; top: 50%; left: 50%;
+        transform: translate(-50%,-45%) scale(0.95);
+        background: #ffffff; width: 100%; max-width: 460px;
+        border-radius: var(--radius); box-shadow: var(--shadow-lg);
+        z-index: 201; opacity: 0; pointer-events: none;
+        transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+        border: 1px solid var(--border); overflow: hidden;
+    }
+    .modal-card.open { opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--bg-panel); }
+    .modal-header h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .modal-close { background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px; transition: color 0.2s; }
+    .modal-close:hover { color: var(--danger); }
+    .modal-body { padding: 24px; }
+    .modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+
+    .summary-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .summary-stat-item { padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-panel); }
+    .summary-stat-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .summary-stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+    .summary-list-container { max-height: 150px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; background: var(--bg-panel); font-family: var(--font-mono); font-size: 11.5px; }
+    .summary-list-title { font-size: 11px; font-weight: 600; margin-top: 10px; margin-bottom: 4px; color: var(--text-secondary); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPIs -->
+<section class="kpi-grid" style="grid-template-columns:repeat(2,1fr);">
+    <div class="kpi-card info">
+        <div class="kpi-card-icon"><i data-lucide="layers-3"></i></div>
+        <p class="kpi-label">Monto Lote Confirmado</p>
+        <p class="kpi-value accent" id="kpi-conc-total">$0.00</p>
+        <p class="kpi-sub" id="kpi-conc-count">0 facturas listas para dispersar</p>
+    </div>
+    <div class="kpi-card success">
+        <div class="kpi-card-icon"><i data-lucide="clipboard-check"></i></div>
+        <p class="kpi-label">Dispersión y Conciliación</p>
+        <p class="kpi-value success">Remesa</p>
+        <p class="kpi-sub">Descarga layout y sube retorno del banco</p>
+    </div>
+</section>
+
+<section class="section-header">
+    <div>
+        <h2 class="section-title">Layout de Pagos y Conciliación Bancaria</h2>
+        <p class="section-subtitle">Genera el reporte de pagos autorizado para el banco y concilia los estados de cuenta devueltos.</p>
+    </div>
+</section>
+
+<div class="conciliacion-controls">
+    <div>
+        <button class="nav-btn primary" onclick="descargarRemesaExcel()" style="padding:12px 24px;font-size:13.5px;font-weight:600;">
+            <i data-lucide="download" style="width:18px;height:18px;"></i>
+            <span>Descargar Layout de Pagos Bancarios</span>
+        </button>
+        <span class="tooltip-info">
+            <i data-lucide="info" style="width:12px;height:12px;"></i>
+            Genera el layout en Excel con las facturas CONFIRMADAS.
+        </span>
+    </div>
+
+    <form id="formConciliacion" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="dropzone-compact" onclick="document.getElementById('conciliacionFileInput').click()">
+            <i data-lucide="upload-cloud" style="width:22px;height:22px;color:var(--accent);"></i>
+            <span id="dropzone-compact-text">Subir Retorno del Banco (.xlsx)</span>
+            <input type="file" id="conciliacionFileInput" accept=".xlsx,.xls" style="display:none;" onchange="ejecutarConciliacion(this)">
+        </div>
+    </form>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Proveedor</th>
+                <th style="text-align:right;">Total MXN</th>
+                <th style="text-align:right;color:var(--accent-dark);">Abono Confirmado</th>
+                <th style="text-align:center;">Moneda</th>
+                <th style="text-align:center;">Vencimiento</th>
+                <th style="text-align:center;">Estatus Operativo</th>
+            </tr>
+        </thead>
+        <tbody id="tableBodyConc"></tbody>
+    </table>
+</div>
+
+<div id="emptyState" style="display:none;padding:48px;text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-top:16px;">
+    <p style="font-size:14px;color:var(--text-muted);font-weight:500;">No hay facturas confirmadas en el lote de remesa.</p>
+</div>
+
+<!-- MODAL RESULTADOS CONCILIACIÓN -->
+<div id="conciliacion-modal-overlay" class="modal-overlay"></div>
+<div id="conciliacion-modal" class="modal-card" style="max-width:500px;">
+    <div class="modal-header">
+        <h3>Resumen de Conciliación Bancaria</h3>
+        <button class="modal-close" onclick="cerrarModalConciliacion()">×</button>
+    </div>
+    <div class="modal-body">
+        <div class="summary-stat-grid">
+            <div class="summary-stat-item" style="border-left:3px solid var(--success);">
+                <div class="summary-stat-label">Facturas Pagadas</div>
+                <div class="summary-stat-value text-success" id="rec-stat-matched">0</div>
+            </div>
+            <div class="summary-stat-item" style="border-left:3px solid var(--danger);">
+                <div class="summary-stat-label">Folios No Encontrados</div>
+                <div class="summary-stat-value text-danger" id="rec-stat-notfound">0</div>
+            </div>
+            <div class="summary-stat-item" style="border-left:3px solid var(--warning);">
+                <div class="summary-stat-label">Ya Estaban Pagadas</div>
+                <div class="summary-stat-value text-warn" id="rec-stat-already">0</div>
+            </div>
+            <div class="summary-stat-item" style="border-left:3px solid var(--blue);">
+                <div class="summary-stat-label">Estado Incorrecto</div>
+                <div class="summary-stat-value text-accent" id="rec-stat-wrong">0</div>
+            </div>
+        </div>
+        <div class="summary-list-title">Folios Conciliados con Éxito:</div>
+        <div class="summary-list-container text-success" id="rec-list-matched">Ninguno</div>
+        <div class="summary-list-title">Folios No Encontrados en Sistema:</div>
+        <div class="summary-list-container text-danger" id="rec-list-notfound">Ninguno</div>
+    </div>
+    <div class="modal-footer">
+        <button class="nav-btn primary" onclick="cerrarModalConciliacion()">Entendido</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/conciliacion.js' %}"></script>
+{% endblock %}
