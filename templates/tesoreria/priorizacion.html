@@ -5,7 +5,6 @@
 {% block breadcrumb %}Priorización de Pagos{% endblock %}
 {% block nav_prio %}active{% endblock %}
 
-{# ── CSS extra del módulo ─────────────────────────────── #}
 {% block extra_css %}
 <style>
     .filter-select {
@@ -31,6 +30,23 @@
     .star-container { display: flex; justify-content: center; gap: 2px; }
     .star-svg { width: 14px; height: 14px; }
 
+    /* Botón ojo para revelar deuda */
+    .kpi-reveal-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 2px 4px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.15s;
+        vertical-align: middle;
+        margin-left: 6px;
+    }
+    .kpi-reveal-btn:hover { color: var(--accent-dark); }
+    .kpi-value-row { display: flex; align-items: center; gap: 4px; }
+
     /* Modal de carga */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -49,10 +65,7 @@
     }
     .modal-card.open { opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1); }
     .modal-card.large { max-width: 950px; width: 90%; }
-    .modal-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--bg-panel);
-    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--bg-panel); }
     .modal-header h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; }
     .modal-close { background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 4px; transition: color 0.2s; }
     .modal-close:hover { color: var(--danger); }
@@ -70,7 +83,7 @@
     .file-dropzone p { margin: 0; font-size: 12.5px; color: var(--text-secondary); }
     .file-dropzone .file-name-preview { font-size: 13px; font-weight: 600; color: var(--accent-dark); display: none; word-break: break-all; }
 
-    /* Auditar modal extras */
+    /* Auditar modal */
     .auditar-modal-header-info { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
     .auditar-modal-meta { font-size: 12.5px; color: var(--text-muted); display: flex; gap: 16px; }
     .auditar-modal-meta span strong { color: var(--text-primary); }
@@ -105,29 +118,41 @@
 </style>
 {% endblock %}
 
-{# ── HTML del módulo ──────────────────────────────────── #}
 {% block content %}
 
 <!-- KPIs -->
 <section class="kpi-grid">
+
+    <!-- Deuda Total — oculta por defecto, se revela con el ojo -->
     <div class="kpi-card">
         <div class="kpi-card-icon"><i data-lucide="banknote"></i></div>
-        <p class="kpi-label">Deuda Total en Fila</p>
-        <p class="kpi-value accent" id="kpi-prio-total">$0.00</p>
+        <p class="kpi-label">
+            Deuda Total en Fila
+            <button class="kpi-reveal-btn" onclick="toggleDeuda()" title="Mostrar / Ocultar monto">
+                <i data-lucide="eye" id="kpi-deuda-eye" style="width:14px;height:14px;"></i>
+            </button>
+        </p>
+        <!-- Valor visible (puntos o monto real) -->
+        <p class="kpi-value accent" id="kpi-prio-total">••••••</p>
+        <!-- Input oculto que guarda el valor real para el toggle -->
+        <input type="hidden" id="kpi-prio-total-raw" value="0">
         <p class="kpi-sub" id="kpi-prio-count">0 facturas en cola</p>
     </div>
+
     <div class="kpi-card warning">
         <div class="kpi-card-icon"><i data-lucide="users"></i></div>
         <p class="kpi-label">Proveedores Pendientes</p>
         <p class="kpi-value warning" id="kpi-prio-criticos">0</p>
         <p class="kpi-sub">Cuentas por liquidar</p>
     </div>
+
     <div class="kpi-card success">
         <div class="kpi-card-icon"><i data-lucide="star"></i></div>
         <p class="kpi-label">Promedio de Estrellas</p>
         <p class="kpi-value success" id="kpi-prio-avg-estrellas">0.0</p>
         <p class="kpi-sub">Importancia de la cartera</p>
     </div>
+
 </section>
 
 <section class="section-header">
@@ -144,17 +169,19 @@
         <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-muted);opacity:0.7;"></i>
     </div>
 
+    <!-- Preseleccionado en 5 estrellas -->
     <select id="starFilterPrio" class="filter-select">
         <option value="all">★ Todos los Niveles</option>
-        <option value="5">★★★★★ 5 Estrellas</option>
+        <option value="5" selected>★★★★★ 5 Estrellas</option>
         <option value="4">★★★★ 4 Estrellas</option>
         <option value="3">★★★ 3 Estrellas</option>
         <option value="2">★★ 2 Estrellas</option>
         <option value="1">★ 1 Estrella</option>
     </select>
 
+    <!-- Texto refleja el orden inicial: estrellas -->
     <button id="sortBtnPrio" class="nav-btn primary" style="margin-left:auto;padding:8px 14px;font-size:12.5px;">
-        <span>Deuda: Mayor a Menor</span>
+        <span>Estrellas: Mayor a Menor</span>
         <i data-lucide="arrow-down-narrow-wide" id="sort-icon-prio" style="width:14px;height:14px;"></i>
     </button>
 
@@ -185,7 +212,7 @@
     <p style="font-size:14px;color:var(--text-muted);font-weight:500;">Ningún registro coincide con los criterios.</p>
 </div>
 
-<!-- ── BLADE (drawer lateral) ─────────────────────────── -->
+<!-- ── BLADE ─────────────────────────────────────────────── -->
 <div id="blade-overlay"></div>
 <div id="blade">
     <div class="blade-header">
@@ -257,7 +284,6 @@
 
 {% endblock %}
 
-{# ── JS del módulo ─────────────────────────────────── #}
 {% block extra_js %}
 <script src="{% static 'js/priorizacion.js' %}"></script>
 {% endblock %}

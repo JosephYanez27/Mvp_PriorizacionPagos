@@ -10,9 +10,11 @@
 // ── Estado del módulo ─────────────────────────────────────
 let facturasPrio        = [];
 let currentPrioList     = [];
-let isSortPrioDesc      = true;
-let selectedStarFilter  = 'all';
+let isSortDesc          = true;       // true = estrellas mayor a menor
+let sortMode            = 'estrellas'; // 'estrellas' | 'deuda'
+let selectedStarFilter  = 'all';        // arranca filtrado en 5 estrellas
 let selectedPrioIndex   = null;
+let deudaVisible        = false;      // KPI deuda oculta por defecto
 
 // ── DOM refs ──────────────────────────────────────────────
 const tableBodyPrio  = document.getElementById('tableBodyPrio');
@@ -24,6 +26,27 @@ const emptyState     = document.getElementById('emptyState');
 const bladeOverlay   = document.getElementById('blade-overlay');
 const blade          = document.getElementById('blade');
 const excelFileInput = document.getElementById('excelFileInput');
+
+
+// ══════════════════════════════════════════════════════════
+//  KPI DEUDA — toggle revelar/ocultar
+// ══════════════════════════════════════════════════════════
+
+const toggleDeuda = () => {
+    deudaVisible = !deudaVisible;
+    const valorEl = document.getElementById('kpi-prio-total');
+    const eyeEl   = document.getElementById('kpi-deuda-eye');
+    const rawEl   = document.getElementById('kpi-prio-total-raw');
+
+    if (deudaVisible) {
+        valorEl.textContent = formatCurrency(parseFloat(rawEl.value || 0));
+        eyeEl.setAttribute('data-lucide', 'eye-off');
+    } else {
+        valorEl.textContent = '••••••';
+        eyeEl.setAttribute('data-lucide', 'eye');
+    }
+    lucide.createIcons();
+};
 
 
 // ══════════════════════════════════════════════════════════
@@ -54,9 +77,13 @@ const filtrarDatosPrio = () => {
         return matchesSearch && matchesStars;
     });
 
-    currentPrioList.sort((a, b) =>
-        isSortPrioDesc ? b.suma_saldo_neto - a.suma_saldo_neto : a.suma_saldo_neto - b.suma_saldo_neto
-    );
+    // Ordenamiento: estrellas (default) o deuda
+    currentPrioList.sort((a, b) => {
+        if (sortMode === 'estrellas') {
+            return isSortDesc ? b.estrellas - a.estrellas : a.estrellas - b.estrellas;
+        }
+        return isSortDesc ? b.suma_saldo_neto - a.suma_saldo_neto : a.suma_saldo_neto - b.suma_saldo_neto;
+    });
 
     renderTablePrio();
 };
@@ -71,7 +98,7 @@ const renderTablePrio = () => {
     }
     emptyState.style.display = 'none';
 
-    let totalSaldoNeto     = 0;
+    let totalSaldoNeto      = 0;
     let totalFacturasGlobal = 0;
     let sumaEstrellas       = 0;
 
@@ -105,10 +132,17 @@ const renderTablePrio = () => {
 };
 
 const actualizarKPIsPrio = (total, provCount, facturasCount, promEstrellas) => {
-    document.getElementById('kpi-prio-total').textContent           = formatCurrency(total);
-    document.getElementById('kpi-prio-count').textContent           = `${facturasCount} facturas en cola`;
-    document.getElementById('kpi-prio-criticos').textContent        = provCount;
-    document.getElementById('kpi-prio-avg-estrellas').textContent   = isNaN(promEstrellas) ? '0.0' : promEstrellas;
+    // Guarda el valor real en el input oculto para el toggle
+    const rawEl = document.getElementById('kpi-prio-total-raw');
+    if (rawEl) rawEl.value = total;
+
+    // Muestra según el estado actual del toggle
+    const valorEl = document.getElementById('kpi-prio-total');
+    valorEl.textContent = deudaVisible ? formatCurrency(total) : '••••••';
+
+    document.getElementById('kpi-prio-count').textContent         = `${facturasCount} facturas en cola`;
+    document.getElementById('kpi-prio-criticos').textContent      = provCount;
+    document.getElementById('kpi-prio-avg-estrellas').textContent = isNaN(promEstrellas) ? '0.0' : promEstrellas;
 };
 
 // Wrapper para el botón "Auditar" de la tabla
@@ -130,20 +164,20 @@ const abrirDetalleBlade = (idx) => {
     const f = currentPrioList[idx];
     if (!f) return;
 
-    document.getElementById('blade-folio').textContent       = `Factura ${f.folio}`;
-    document.getElementById('blade-prov-name').textContent   = f.proveedor;
-    document.getElementById('blade-monto-orig').textContent  = `${formatCurrency(f.monto_original)} ${f.moneda}`;
-    document.getElementById('blade-monto-mxn').textContent   = formatCurrency(f.monto_mxn);
-    document.getElementById('blade-total').textContent       = formatCurrency(f.total);
-    document.getElementById('blade-saldo-neto').textContent  = formatCurrency(f.saldo_neto);
-    document.getElementById('blade-factor-prov').textContent = `${f.estrellas} / 5 Estrellas`;
+    document.getElementById('blade-folio').textContent         = `Factura ${f.folio}`;
+    document.getElementById('blade-prov-name').textContent     = f.proveedor;
+    document.getElementById('blade-monto-orig').textContent    = `${formatCurrency(f.monto_original)} ${f.moneda}`;
+    document.getElementById('blade-monto-mxn').textContent     = formatCurrency(f.monto_mxn);
+    document.getElementById('blade-total').textContent         = formatCurrency(f.total);
+    document.getElementById('blade-saldo-neto').textContent    = formatCurrency(f.saldo_neto);
+    document.getElementById('blade-factor-prov').textContent   = `${f.estrellas} / 5 Estrellas`;
     document.getElementById('blade-factor-tiempo').textContent = `${f.dias_vencidos} días de retraso`;
 
     const abonoInput = document.getElementById('abonoInput');
     abonoInput.value = f.saldo_neto;
     abonoInput.max   = f.saldo_neto;
-    document.getElementById('abono-error-msg').style.display  = 'none';
-    document.getElementById('notasAuditoriaInput').value      = f.notas_auditoria || '';
+    document.getElementById('abono-error-msg').style.display = 'none';
+    document.getElementById('notasAuditoriaInput').value     = f.notas_auditoria || '';
 
     const alertZone  = document.getElementById('blade-alert-zone');
     const alertTitle = document.getElementById('blade-alert-title');
@@ -226,7 +260,7 @@ document.getElementById('confirmAutorizarBtn').addEventListener('click', async (
 
 const abrirModalCarga = () => {
     excelFileInput.value = '';
-    document.getElementById('dropzone-text').style.display = 'block';
+    document.getElementById('dropzone-text').style.display    = 'block';
     document.getElementById('file-name-preview').style.display = 'none';
     document.getElementById('upload-modal-overlay').classList.add('open');
     document.getElementById('upload-modal').classList.add('open');
@@ -241,18 +275,18 @@ excelFileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
         document.getElementById('dropzone-text').style.display = 'none';
         const preview = document.getElementById('file-name-preview');
-        preview.textContent = `✓ Seleccionado: ${e.target.files[0].name}`;
+        preview.textContent  = `✓ Seleccionado: ${e.target.files[0].name}`;
         preview.style.display = 'block';
     }
 });
 
 document.getElementById('formSubirExcel').addEventListener('submit', async function (e) {
     e.preventDefault();
-    const submitBtn  = document.getElementById('submitBtn');
-    const fileInput  = document.getElementById('excelFileInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const fileInput = document.getElementById('excelFileInput');
     if (fileInput.files.length === 0) return;
 
-    const origText      = submitBtn.textContent;
+    const origText        = submitBtn.textContent;
     submitBtn.textContent = 'Importando lote...';
     submitBtn.disabled    = true;
 
@@ -288,13 +322,33 @@ starFilter.addEventListener('change', (e) => {
 searchInput.addEventListener('input', filtrarDatosPrio);
 
 sortBtn.addEventListener('click', () => {
-    isSortPrioDesc = !isSortPrioDesc;
-    sortBtn.querySelector('span').textContent = isSortPrioDesc ? 'Deuda: Mayor a Menor' : 'Deuda: Menor a Mayor';
-    sortIcon.setAttribute('data-lucide', isSortPrioDesc ? 'arrow-down-narrow-wide' : 'arrow-up-narrow-wide');
+    // Cicla: Estrellas↓ → Estrellas↑ → Deuda↓ → Deuda↑ → Estrellas↓
+    if (sortMode === 'estrellas' && isSortDesc) {
+        isSortDesc = false;
+        sortBtn.querySelector('span').textContent = 'Estrellas: Menor a Mayor';
+        sortIcon.setAttribute('data-lucide', 'arrow-up-narrow-wide');
+    } else if (sortMode === 'estrellas' && !isSortDesc) {
+        sortMode   = 'deuda';
+        isSortDesc = true;
+        sortBtn.querySelector('span').textContent = 'Deuda: Mayor a Menor';
+        sortIcon.setAttribute('data-lucide', 'arrow-down-narrow-wide');
+    } else if (sortMode === 'deuda' && isSortDesc) {
+        isSortDesc = false;
+        sortBtn.querySelector('span').textContent = 'Deuda: Menor a Mayor';
+        sortIcon.setAttribute('data-lucide', 'arrow-up-narrow-wide');
+    } else {
+        sortMode   = 'estrellas';
+        isSortDesc = true;
+        sortBtn.querySelector('span').textContent = 'Estrellas: Mayor a Menor';
+        sortIcon.setAttribute('data-lucide', 'arrow-down-narrow-wide');
+    }
     lucide.createIcons();
     filtrarDatosPrio();
 });
 
 
 // ── Init ──────────────────────────────────────────────────
+// Sincroniza el select del DOM con el estado inicial
+starFilter.value = selectedStarFilter;
+sortBtn.querySelector('span').textContent = 'Estrellas: Mayor a Menor';
 cargarDatosPrio();
